@@ -106,6 +106,93 @@ juce::AudioProcessorValueTreeState::ParameterLayout MyAmpSimAudioProcessor::crea
         [](const juce::String& text) { return text.trimCharactersAtEnd(" %").getFloatValue() / 100.0f; }));
 
     layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "ampType", 1 },
+        "Amp Type",
+        juce::StringArray { "Clean", "Crunch", "Lead" },
+        1));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "irLowCutHz", 1 },
+        "IR Low Cut",
+        juce::NormalisableRange<float>(20.0f, 1200.0f, 1.0f, 0.35f),
+        80.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value, 0) + " Hz"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "irHighCutHz", 1 },
+        "IR High Cut",
+        juce::NormalisableRange<float>(1200.0f, 20000.0f, 1.0f, 0.35f),
+        9000.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value, 0) + " Hz"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "irLevelDb", 1 },
+        "IR Level",
+        juce::NormalisableRange<float>(-24.0f, 12.0f, 0.1f, 1.0f),
+        0.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value, 1) + " dB"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" dB").getFloatValue(); }));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "irPhaseInvert", 1 },
+        "IR Phase Invert",
+        false));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "cabBlend", 1 },
+        "Cab Blend",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f),
+        0.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value * 100.0f, 0) + " %"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" %").getFloatValue() / 100.0f; }));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "cabLevelA", 1 },
+        "Cab A Level",
+        juce::NormalisableRange<float>(-24.0f, 12.0f, 0.1f, 1.0f),
+        0.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value, 1) + " dB"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" dB").getFloatValue(); }));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "cabLevelB", 1 },
+        "Cab B Level",
+        juce::NormalisableRange<float>(-24.0f, 12.0f, 0.1f, 1.0f),
+        0.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value, 1) + " dB"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" dB").getFloatValue(); }));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "cabFlipA", 1 },
+        "Cab Flip A",
+        false));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "cabFlipB", 1 },
+        "Cab Flip B",
+        false));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "cabPan", 1 },
+        "Cab Pan",
+        juce::NormalisableRange<float>(-1.0f, 1.0f, 0.001f, 1.0f),
+        0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID { "oversamplingMode", 1 },
         "Oversampling",
         juce::StringArray { "Off", "2x", "4x" },
@@ -181,45 +268,71 @@ void MyAmpSimAudioProcessor::changeProgramName(int index, const juce::String& ne
 
 bool MyAmpSimAudioProcessor::loadCabinetIR(const juce::File& irFile)
 {
-    if (!irFile.existsAsFile())
-        return false;
-
-    {
-        const juce::ScopedLock lock(stateLock);
-        currentIRFile = irFile;
-    }
-
-    if (isPrepared)
-    {
-        cabinetConvolution.loadImpulseResponse(irFile,
-                                               juce::dsp::Convolution::Stereo::yes,
-                                               juce::dsp::Convolution::Trim::yes,
-                                               0,
-                                               juce::dsp::Convolution::Normalise::yes);
-    }
-
-    return true;
+    return loadCabinetIRSlot(0, irFile);
 }
 
 void MyAmpSimAudioProcessor::clearCabinetIR()
 {
-    {
-        const juce::ScopedLock lock(stateLock);
-        currentIRFile = juce::File();
-    }
-
-    if (isPrepared)
-        loadDefaultCabinetIR();
+    clearCabinetIRSlot(0);
 }
 
 juce::String MyAmpSimAudioProcessor::getCurrentIRName() const
 {
+    return getCurrentIRNameForSlot(0);
+}
+
+bool MyAmpSimAudioProcessor::loadCabinetIRSlot(int slotIndex, const juce::File& irFile)
+{
+    if (slotIndex < 0 || slotIndex > 1 || !irFile.existsAsFile())
+        return false;
+
+    {
+        const juce::ScopedLock lock(stateLock);
+
+        if (slotIndex == 0)
+            currentIRFileA = irFile;
+        else
+            currentIRFileB = irFile;
+    }
+
+    applyCabinetSlotLoadIfPrepared(slotIndex);
+    return true;
+}
+
+void MyAmpSimAudioProcessor::clearCabinetIRSlot(int slotIndex)
+{
+    if (slotIndex < 0 || slotIndex > 1)
+        return;
+
+    {
+        const juce::ScopedLock lock(stateLock);
+
+        if (slotIndex == 0)
+            currentIRFileA = juce::File();
+        else
+            currentIRFileB = juce::File();
+    }
+
+    if (isPrepared)
+        loadDefaultCabinetIR(slotIndex);
+}
+
+juce::String MyAmpSimAudioProcessor::getCurrentIRNameForSlot(int slotIndex) const
+{
     const juce::ScopedLock lock(stateLock);
 
-    if (currentIRFile.existsAsFile())
-        return currentIRFile.getFileName();
+    if (slotIndex == 1)
+    {
+        if (currentIRFileB.existsAsFile())
+            return currentIRFileB.getFileName();
 
-    return "Default (No Cabinet)";
+        return "Slot B (Empty)";
+    }
+
+    if (currentIRFileA.existsAsFile())
+        return currentIRFileA.getFileName();
+
+    return "Slot A (Default)";
 }
 
 void MyAmpSimAudioProcessor::setBackgroundImagePath(const juce::String& path)
@@ -294,7 +407,11 @@ void MyAmpSimAudioProcessor::beginMidiLearnForParam(int paramIndex)
 
 juce::String MyAmpSimAudioProcessor::getMidiMappingDescription() const
 {
-    static constexpr const char* names[] = { "Drive", "Output", "Gate", "Boost", "Delay Mix", "Reverb Mix" };
+    static constexpr const char* names[] =
+    {
+        "Drive", "Output", "Gate", "Boost", "Delay Mix", "Reverb Mix",
+        "Cab Blend", "Cab Pan", "Cab A Level", "Cab B Level"
+    };
 
     juce::StringArray items;
     for (int i = 0; i < static_cast<int>(midiCCMap.size()); ++i)
@@ -312,7 +429,11 @@ juce::String MyAmpSimAudioProcessor::getMidiMappingDescription() const
 
 void MyAmpSimAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMessages)
 {
-    static constexpr const char* parameterIds[] = { "drive", "outputVolume", "gateThreshold", "boostDb", "delayMix", "reverbMix" };
+    static constexpr const char* parameterIds[] =
+    {
+        "drive", "outputVolume", "gateThreshold", "boostDb", "delayMix", "reverbMix",
+        "cabBlend", "cabPan", "cabLevelA", "cabLevelB"
+    };
 
     for (const auto metadata : midiMessages)
     {
@@ -341,17 +462,41 @@ void MyAmpSimAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMes
     }
 }
 
-void MyAmpSimAudioProcessor::loadDefaultCabinetIR()
+void MyAmpSimAudioProcessor::applyCabinetSlotLoadIfPrepared(int slotIndex)
+{
+    if (!isPrepared)
+        return;
+
+    const juce::ScopedLock lock(stateLock);
+    const auto& fileToLoad = (slotIndex == 0) ? currentIRFileA : currentIRFileB;
+
+    auto& convolution = (slotIndex == 0) ? cabinetConvolutionA : cabinetConvolutionB;
+    if (fileToLoad.existsAsFile())
+    {
+        convolution.loadImpulseResponse(fileToLoad,
+                                        juce::dsp::Convolution::Stereo::yes,
+                                        juce::dsp::Convolution::Trim::yes,
+                                        0,
+                                        juce::dsp::Convolution::Normalise::yes);
+    }
+    else
+    {
+        loadDefaultCabinetIR(slotIndex);
+    }
+}
+
+void MyAmpSimAudioProcessor::loadDefaultCabinetIR(int slotIndex)
 {
     juce::AudioBuffer<float> identityIR(1, 1);
     identityIR.clear();
     identityIR.setSample(0, 0, 1.0f);
 
-    cabinetConvolution.loadImpulseResponse(std::move(identityIR),
-                                           processSpec.sampleRate > 0.0 ? processSpec.sampleRate : 44100.0,
-                                           juce::dsp::Convolution::Stereo::no,
-                                           juce::dsp::Convolution::Trim::no,
-                                           juce::dsp::Convolution::Normalise::no);
+    auto& convolution = (slotIndex == 0) ? cabinetConvolutionA : cabinetConvolutionB;
+    convolution.loadImpulseResponse(std::move(identityIR),
+                                    processSpec.sampleRate > 0.0 ? processSpec.sampleRate : 44100.0,
+                                    juce::dsp::Convolution::Stereo::no,
+                                    juce::dsp::Convolution::Trim::no,
+                                    juce::dsp::Convolution::Normalise::no);
 }
 
 void MyAmpSimAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -361,8 +506,13 @@ void MyAmpSimAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     processSpec.numChannels = static_cast<juce::uint32>(juce::jmax(1, getMainBusNumOutputChannels()));
     processingChannels = static_cast<int>(processSpec.numChannels);
 
-    cabinetConvolution.reset();
-    cabinetConvolution.prepare(processSpec);
+    cabinetConvolutionA.reset();
+    cabinetConvolutionA.prepare(processSpec);
+    cabinetConvolutionB.reset();
+    cabinetConvolutionB.prepare(processSpec);
+
+    cabBufferA.setSize(processingChannels, samplesPerBlock, false, false, true);
+    cabBufferB.setSize(processingChannels, samplesPerBlock, false, false, true);
 
     delayLine.reset();
     delayLine.prepare(processSpec);
@@ -395,18 +545,23 @@ void MyAmpSimAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     isPrepared = true;
 
     const juce::ScopedLock lock(stateLock);
-    if (currentIRFile.existsAsFile())
-    {
-        cabinetConvolution.loadImpulseResponse(currentIRFile,
-                                               juce::dsp::Convolution::Stereo::yes,
-                                               juce::dsp::Convolution::Trim::yes,
-                                               0,
-                                               juce::dsp::Convolution::Normalise::yes);
-    }
+    if (currentIRFileA.existsAsFile())
+        cabinetConvolutionA.loadImpulseResponse(currentIRFileA,
+                                                juce::dsp::Convolution::Stereo::yes,
+                                                juce::dsp::Convolution::Trim::yes,
+                                                0,
+                                                juce::dsp::Convolution::Normalise::yes);
     else
-    {
-        loadDefaultCabinetIR();
-    }
+        loadDefaultCabinetIR(0);
+
+    if (currentIRFileB.existsAsFile())
+        cabinetConvolutionB.loadImpulseResponse(currentIRFileB,
+                                                juce::dsp::Convolution::Stereo::yes,
+                                                juce::dsp::Convolution::Trim::yes,
+                                                0,
+                                                juce::dsp::Convolution::Normalise::yes);
+    else
+        loadDefaultCabinetIR(1);
 }
 
 void MyAmpSimAudioProcessor::releaseResources()
@@ -545,12 +700,39 @@ void MyAmpSimAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     const float delayTimeMs = apvts.getRawParameterValue("delayTimeMs")->load();
     const float delayMix = apvts.getRawParameterValue("delayMix")->load();
     const float reverbMix = apvts.getRawParameterValue("reverbMix")->load();
+    const int ampType = static_cast<int>(apvts.getRawParameterValue("ampType")->load());
+    const float irLowCutHz = apvts.getRawParameterValue("irLowCutHz")->load();
+    const float irHighCutHz = apvts.getRawParameterValue("irHighCutHz")->load();
+    const float irLevelDb = apvts.getRawParameterValue("irLevelDb")->load();
+    const bool irPhaseInvert = apvts.getRawParameterValue("irPhaseInvert")->load() > 0.5f;
+    const float cabBlend = apvts.getRawParameterValue("cabBlend")->load();
+    const float cabLevelA = apvts.getRawParameterValue("cabLevelA")->load();
+    const float cabLevelB = apvts.getRawParameterValue("cabLevelB")->load();
+    const bool cabFlipA = apvts.getRawParameterValue("cabFlipA")->load() > 0.5f;
+    const bool cabFlipB = apvts.getRawParameterValue("cabFlipB")->load() > 0.5f;
+    const float cabPan = apvts.getRawParameterValue("cabPan")->load();
     const int oversamplingMode = static_cast<int>(apvts.getRawParameterValue("oversamplingMode")->load());
 
     const float outputGain = juce::Decibels::decibelsToGain(outputDb);
     const float gateThresholdLinear = juce::Decibels::decibelsToGain(gateThresholdDb);
     const float boostGain = juce::Decibels::decibelsToGain(boostDb);
+    const float irLevelGain = juce::Decibels::decibelsToGain(irLevelDb);
+    const float cabAGain = juce::Decibels::decibelsToGain(cabLevelA);
+    const float cabBGain = juce::Decibels::decibelsToGain(cabLevelB);
+    const float cabAPolarity = cabFlipA ? -1.0f : 1.0f;
+    const float cabBPolarity = cabFlipB ? -1.0f : 1.0f;
     const float delayFeedback = 0.35f;
+
+    float ampSaturation = 1.0f;
+    float ampPostEQ = 1.0f;
+
+    if (ampType == 0)      { ampSaturation = 0.72f; ampPostEQ = 1.05f; }
+    else if (ampType == 2) { ampSaturation = 1.38f; ampPostEQ = 0.92f; }
+
+    irLowCutL.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), irLowCutHz);
+    irLowCutR.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), irLowCutHz);
+    irHighCutL.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(getSampleRate(), irHighCutHz);
+    irHighCutR.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(getSampleRate(), irHighCutHz);
 
     const float delaySamples = static_cast<float>(getSampleRate() * delayTimeMs * 0.001);
     delayLine.setDelay(delaySamples);
@@ -574,7 +756,8 @@ void MyAmpSimAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 
                 const float gated = in * gateGain;
                 const float boosted = gated * boostGain;
-                channelData[sample] = std::tanh(boosted * drive) * outputGain;
+                const float amped = std::tanh(boosted * drive * ampSaturation) * ampPostEQ;
+                channelData[sample] = amped * outputGain;
             }
         }
     };
@@ -604,9 +787,61 @@ void MyAmpSimAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     for (int channel = totalNumInputChannels; channel < totalNumOutputChannels; ++channel)
         buffer.copyFrom(channel, 0, buffer, channel % totalNumInputChannels, 0, numSamples);
 
-    // Cabinet simulation: convolve amp output with the loaded speaker IR.
-    juce::dsp::ProcessContextReplacing<float> context(block);
-    cabinetConvolution.process(context);
+    // Dual cabinet simulation: process slot A and B, then blend.
+    cabBufferA.makeCopyOf(buffer, true);
+    cabBufferB.makeCopyOf(buffer, true);
+
+    juce::dsp::AudioBlock<float> cabBlockA(cabBufferA);
+    juce::dsp::AudioBlock<float> cabBlockB(cabBufferB);
+    juce::dsp::ProcessContextReplacing<float> cabContextA(cabBlockA);
+    juce::dsp::ProcessContextReplacing<float> cabContextB(cabBlockB);
+    cabinetConvolutionA.process(cabContextA);
+    cabinetConvolutionB.process(cabContextB);
+
+    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+    {
+        auto* out = buffer.getWritePointer(channel);
+        const auto* a = cabBufferA.getReadPointer(channel);
+        const auto* b = cabBufferB.getReadPointer(channel);
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            const float slotA = a[sample] * cabAGain * cabAPolarity;
+            const float slotB = b[sample] * cabBGain * cabBPolarity;
+            out[sample] = slotA * (1.0f - cabBlend) + slotB * cabBlend;
+        }
+    }
+
+    // IR section finishing: cab low/high cut + level + phase + stereo pan.
+    const float panL = std::cos((cabPan + 1.0f) * 0.25f * juce::MathConstants<float>::pi);
+    const float panR = std::sin((cabPan + 1.0f) * 0.25f * juce::MathConstants<float>::pi);
+
+    for (int sample = 0; sample < numSamples; ++sample)
+    {
+        auto l = buffer.getSample(0, sample);
+        l = irLowCutL.processSample(l);
+        l = irHighCutL.processSample(l);
+
+        float r = (totalNumOutputChannels > 1) ? buffer.getSample(1, sample) : l;
+        r = irLowCutR.processSample(r);
+        r = irHighCutR.processSample(r);
+
+        if (irPhaseInvert)
+        {
+            l = -l;
+            r = -r;
+        }
+
+        l *= irLevelGain;
+        r *= irLevelGain;
+
+        l *= panL;
+        r *= panR;
+
+        buffer.setSample(0, sample, l);
+        if (totalNumOutputChannels > 1)
+            buffer.setSample(1, sample, r);
+    }
 
     // Post-FX delay (parallel blend).
     for (int channel = 0; channel < totalNumOutputChannels; ++channel)
@@ -632,7 +867,8 @@ void MyAmpSimAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     reverbParams.freezeMode = 0.0f;
     reverb.setParameters(reverbParams);
 
-    reverb.process(context);
+    juce::dsp::ProcessContextReplacing<float> reverbContext(block);
+    reverb.process(reverbContext);
 
     const float outputPeak = getBufferPeak(buffer, 0, totalNumOutputChannels);
     outputMeterLevel.store(juce::jmax(outputPeak, outputMeterLevel.load() * 0.92f));
@@ -654,7 +890,9 @@ void MyAmpSimAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 
     {
         const juce::ScopedLock lock(stateLock);
-        state.setProperty("cabIrPath", currentIRFile.getFullPathName(), nullptr);
+        state.setProperty("cabIrPath", currentIRFileA.getFullPathName(), nullptr);
+        state.setProperty("cabIrPathA", currentIRFileA.getFullPathName(), nullptr);
+        state.setProperty("cabIrPathB", currentIRFileB.getFullPathName(), nullptr);
         state.setProperty("bgImagePath", backgroundImagePath, nullptr);
     }
 
@@ -664,6 +902,10 @@ void MyAmpSimAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     state.setProperty("cc_boost", midiCCMap[3], nullptr);
     state.setProperty("cc_delayMix", midiCCMap[4], nullptr);
     state.setProperty("cc_reverbMix", midiCCMap[5], nullptr);
+    state.setProperty("cc_cabBlend", midiCCMap[6], nullptr);
+    state.setProperty("cc_cabPan", midiCCMap[7], nullptr);
+    state.setProperty("cc_cabLevelA", midiCCMap[8], nullptr);
+    state.setProperty("cc_cabLevelB", midiCCMap[9], nullptr);
 
     auto xml = state.createXml();
     copyXmlToBinary(*xml, destData);
@@ -679,7 +921,9 @@ void MyAmpSimAudioProcessor::setStateInformation(const void* data, int sizeInByt
     auto loadedState = juce::ValueTree::fromXml(*xml);
     apvts.replaceState(loadedState);
 
-    const auto irPath = loadedState.getProperty("cabIrPath").toString();
+    const auto irPathLegacy = loadedState.getProperty("cabIrPath").toString();
+    const auto irPathA = loadedState.getProperty("cabIrPathA", irPathLegacy).toString();
+    const auto irPathB = loadedState.getProperty("cabIrPathB").toString();
     setBackgroundImagePath(loadedState.getProperty("bgImagePath").toString());
 
     midiCCMap[0] = static_cast<int>(loadedState.getProperty("cc_drive", -1));
@@ -688,11 +932,20 @@ void MyAmpSimAudioProcessor::setStateInformation(const void* data, int sizeInByt
     midiCCMap[3] = static_cast<int>(loadedState.getProperty("cc_boost", -1));
     midiCCMap[4] = static_cast<int>(loadedState.getProperty("cc_delayMix", -1));
     midiCCMap[5] = static_cast<int>(loadedState.getProperty("cc_reverbMix", -1));
+    midiCCMap[6] = static_cast<int>(loadedState.getProperty("cc_cabBlend", -1));
+    midiCCMap[7] = static_cast<int>(loadedState.getProperty("cc_cabPan", -1));
+    midiCCMap[8] = static_cast<int>(loadedState.getProperty("cc_cabLevelA", -1));
+    midiCCMap[9] = static_cast<int>(loadedState.getProperty("cc_cabLevelB", -1));
 
-    if (irPath.isNotEmpty())
-        loadCabinetIR(juce::File(irPath));
+    if (irPathA.isNotEmpty())
+        loadCabinetIRSlot(0, juce::File(irPathA));
     else
-        clearCabinetIR();
+        clearCabinetIRSlot(0);
+
+    if (irPathB.isNotEmpty())
+        loadCabinetIRSlot(1, juce::File(irPathB));
+    else
+        clearCabinetIRSlot(1);
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

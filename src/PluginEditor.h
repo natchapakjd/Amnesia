@@ -38,6 +38,7 @@ private:
 
     void openAudioSettings();
     void chooseCabinetIR();
+    void chooseCabinetIRSlot(int slotIndex);
     void refreshIrStatus();
     void refreshTunerStatus();
     void refreshToolsStatus();
@@ -60,6 +61,10 @@ private:
     juce::TextButton audioSettingsButton { "Audio Settings" };
     juce::TextButton loadIrButton { "Load IR" };
     juce::TextButton clearIrButton { "Clear IR" };
+    juce::TextButton loadIrAButton { "Load A" };
+    juce::TextButton clearIrAButton { "Clear A" };
+    juce::TextButton loadIrBButton { "Load B" };
+    juce::TextButton clearIrBButton { "Clear B" };
     juce::TextButton savePresetButton { "Save Preset" };
     juce::TextButton loadPresetButton { "Load Preset" };
     juce::TextButton captureAButton { "Capture A" };
@@ -68,13 +73,20 @@ private:
     juce::TextButton clearBackgroundButton { "Clear Background" };
     juce::ToggleButton compareABToggle { "Compare B" };
     juce::ToggleButton tunerToggle { "Show Tuner" };
+    juce::ToggleButton irPhaseToggle { "IR Phase" };
+    juce::ToggleButton cabFlipAButton { "Flip A" };
+    juce::ToggleButton cabFlipBButton { "Flip B" };
     juce::TextButton undoButton { "Undo" };
     juce::TextButton redoButton { "Redo" };
+    juce::ComboBox ampTypeCombo;
+    juce::Label ampTypeLabel { {}, "Amp Type" };
     juce::ComboBox oversamplingCombo;
     juce::Label oversamplingLabel { {}, "Oversampling" };
     juce::ComboBox midiParamCombo;
     juce::TextButton midiLearnButton { "MIDI Learn" };
     juce::Label irStatusLabel;
+    juce::Label irStatusALabel;
+    juce::Label irStatusBLabel;
     juce::Label tunerNoteLabel;
     juce::Label tunerDetailLabel;
     juce::Label midiMapStatusLabel;
@@ -89,6 +101,13 @@ private:
     juce::Slider delayTimeSlider;
     juce::Slider delayMixSlider;
     juce::Slider reverbMixSlider;
+    juce::Slider cabBlendSlider;
+    juce::Slider cabPanSlider;
+    juce::Slider cabLevelASlider;
+    juce::Slider cabLevelBSlider;
+    juce::Slider irLowCutSlider;
+    juce::Slider irHighCutSlider;
+    juce::Slider irLevelSlider;
     juce::Label  driveLabel  { {}, "Drive" };
     juce::Label  volumeLabel { {}, "Volume" };
     juce::Label  gateLabel { {}, "Gate" };
@@ -96,6 +115,13 @@ private:
     juce::Label  delayTimeLabel { {}, "Delay Time" };
     juce::Label  delayMixLabel { {}, "Delay Mix" };
     juce::Label  reverbMixLabel { {}, "Reverb Mix" };
+    juce::Label  cabBlendLabel { {}, "Cab Blend" };
+    juce::Label  cabPanLabel { {}, "Cab Pan" };
+    juce::Label  cabLevelALabel { {}, "Cab A Level" };
+    juce::Label  cabLevelBLabel { {}, "Cab B Level" };
+    juce::Label  irLowCutLabel { {}, "IR Low Cut" };
+    juce::Label  irHighCutLabel { {}, "IR High Cut" };
+    juce::Label  irLevelLabel { {}, "IR Level" };
 
     std::unique_ptr<juce::FileChooser> irChooser;
     std::unique_ptr<juce::FileChooser> presetChooser;
@@ -114,5 +140,16 @@ private:
     juce::AudioProcessorValueTreeState::SliderAttachment delayTimeAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment delayMixAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment reverbMixAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment cabBlendAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment cabPanAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment cabLevelAAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment cabLevelBAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment irLowCutAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment irHighCutAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment irLevelAttachment;
+    juce::AudioProcessorValueTreeState::ComboBoxAttachment ampTypeAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment irPhaseAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment cabFlipAAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment cabFlipBAttachment;
     juce::AudioProcessorValueTreeState::ComboBoxAttachment oversamplingAttachment;
 };

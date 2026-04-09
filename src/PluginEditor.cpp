@@ -44,41 +44,59 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     : AudioProcessorEditor(&processor),
       audioProcessor(processor),
       driveAttachment(audioProcessor.apvts, "drive", driveSlider),
-            volumeAttachment(audioProcessor.apvts, "outputVolume", volumeSlider),
-            gateAttachment(audioProcessor.apvts, "gateThreshold", gateSlider),
-            boostAttachment(audioProcessor.apvts, "boostDb", boostSlider),
-            delayTimeAttachment(audioProcessor.apvts, "delayTimeMs", delayTimeSlider),
-            delayMixAttachment(audioProcessor.apvts, "delayMix", delayMixSlider),
-            reverbMixAttachment(audioProcessor.apvts, "reverbMix", reverbMixSlider),
-            oversamplingAttachment(audioProcessor.apvts, "oversamplingMode", oversamplingCombo)
+    volumeAttachment(audioProcessor.apvts, "outputVolume", volumeSlider),
+    gateAttachment(audioProcessor.apvts, "gateThreshold", gateSlider),
+    boostAttachment(audioProcessor.apvts, "boostDb", boostSlider),
+    delayTimeAttachment(audioProcessor.apvts, "delayTimeMs", delayTimeSlider),
+    delayMixAttachment(audioProcessor.apvts, "delayMix", delayMixSlider),
+    reverbMixAttachment(audioProcessor.apvts, "reverbMix", reverbMixSlider),
+    irLowCutAttachment(audioProcessor.apvts, "irLowCutHz", irLowCutSlider),
+    irHighCutAttachment(audioProcessor.apvts, "irHighCutHz", irHighCutSlider),
+    irLevelAttachment(audioProcessor.apvts, "irLevelDb", irLevelSlider),
+    cabBlendAttachment(audioProcessor.apvts, "cabBlend", cabBlendSlider),
+    cabPanAttachment(audioProcessor.apvts, "cabPan", cabPanSlider),
+    cabLevelAAttachment(audioProcessor.apvts, "cabLevelA", cabLevelASlider),
+    cabLevelBAttachment(audioProcessor.apvts, "cabLevelB", cabLevelBSlider),
+    ampTypeAttachment(audioProcessor.apvts, "ampType", ampTypeCombo),
+    irPhaseAttachment(audioProcessor.apvts, "irPhaseInvert", irPhaseToggle),
+    cabFlipAAttachment(audioProcessor.apvts, "cabFlipA", cabFlipAButton),
+    cabFlipBAttachment(audioProcessor.apvts, "cabFlipB", cabFlipBButton),
+    oversamplingAttachment(audioProcessor.apvts, "oversamplingMode", oversamplingCombo)
 {
-        setLookAndFeel(&ampLookAndFeel);
+    setLookAndFeel(&ampLookAndFeel);
 
-        addAndMakeVisible(ampTabButton);
-        addAndMakeVisible(fxTabButton);
-        addAndMakeVisible(toolsTabButton);
-        addAndMakeVisible(uiSizeLabel);
-        addAndMakeVisible(uiSizeCombo);
+    addAndMakeVisible(ampTabButton);
+    addAndMakeVisible(fxTabButton);
+    addAndMakeVisible(toolsTabButton);
+    addAndMakeVisible(uiSizeLabel);
+    addAndMakeVisible(uiSizeCombo);
 
-        ampTabButton.onClick = [this] { switchToTab(UiTab::amp); };
-        fxTabButton.onClick = [this] { switchToTab(UiTab::fx); };
-        toolsTabButton.onClick = [this] { switchToTab(UiTab::tools); };
+    ampTabButton.onClick = [this] { switchToTab(UiTab::amp); };
+    fxTabButton.onClick = [this] { switchToTab(UiTab::fx); };
+    toolsTabButton.onClick = [this] { switchToTab(UiTab::tools); };
 
-        uiSizeLabel.setJustificationType(juce::Justification::centredRight);
-        uiSizeCombo.addItem("Small", 1);
-        uiSizeCombo.addItem("Medium", 2);
-        uiSizeCombo.addItem("Large", 3);
-        uiSizeCombo.setSelectedId(2);
-        uiSizeCombo.onChange = [this]
-        {
-            const int selected = uiSizeCombo.getSelectedId();
-            if (selected == 1)
-                applyEditorSizePreset(UiScale::small);
-            else if (selected == 3)
-                applyEditorSizePreset(UiScale::large);
-            else
-                applyEditorSizePreset(UiScale::medium);
-        };
+    uiSizeLabel.setJustificationType(juce::Justification::centredRight);
+    uiSizeCombo.addItem("Small", 1);
+    uiSizeCombo.addItem("Medium", 2);
+    uiSizeCombo.addItem("Large", 3);
+    uiSizeCombo.setSelectedId(2);
+    uiSizeCombo.onChange = [this]
+    {
+        const int selected = uiSizeCombo.getSelectedId();
+        if (selected == 1)
+            applyEditorSizePreset(UiScale::small);
+        else if (selected == 3)
+            applyEditorSizePreset(UiScale::large);
+        else
+            applyEditorSizePreset(UiScale::medium);
+    };
+
+    ampTypeLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(ampTypeLabel);
+    addAndMakeVisible(ampTypeCombo);
+    ampTypeCombo.addItem("Clean", 1);
+    ampTypeCombo.addItem("Crunch", 2);
+    ampTypeCombo.addItem("Lead", 3);
 
     addAndMakeVisible(audioSettingsButton);
     audioSettingsButton.onClick = [this] { openAudioSettings(); };
@@ -91,6 +109,26 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     clearIrButton.onClick = [this]
     {
         audioProcessor.clearCabinetIR();
+        refreshIrStatus();
+    };
+
+    addAndMakeVisible(loadIrAButton);
+    loadIrAButton.onClick = [this] { chooseCabinetIRSlot(0); };
+
+    addAndMakeVisible(clearIrAButton);
+    clearIrAButton.onClick = [this]
+    {
+        audioProcessor.clearCabinetIRSlot(0);
+        refreshIrStatus();
+    };
+
+    addAndMakeVisible(loadIrBButton);
+    loadIrBButton.onClick = [this] { chooseCabinetIRSlot(1); };
+
+    addAndMakeVisible(clearIrBButton);
+    clearIrBButton.onClick = [this]
+    {
+        audioProcessor.clearCabinetIRSlot(1);
         refreshIrStatus();
     };
 
@@ -119,6 +157,10 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     tunerToggle.setToggleState(false, juce::dontSendNotification);
     tunerToggle.onClick = [this] { updateTabVisibility(); };
 
+    addAndMakeVisible(irPhaseToggle);
+    addAndMakeVisible(cabFlipAButton);
+    addAndMakeVisible(cabFlipBButton);
+
     oversamplingLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(oversamplingLabel);
     addAndMakeVisible(oversamplingCombo);
@@ -139,6 +181,10 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     midiParamCombo.addItem("Boost", 4);
     midiParamCombo.addItem("Delay Mix", 5);
     midiParamCombo.addItem("Reverb Mix", 6);
+    midiParamCombo.addItem("Cab Blend", 7);
+    midiParamCombo.addItem("Cab Pan", 8);
+    midiParamCombo.addItem("Cab A Level", 9);
+    midiParamCombo.addItem("Cab B Level", 10);
     midiParamCombo.setSelectedId(1);
 
     addAndMakeVisible(midiLearnButton);
@@ -160,6 +206,14 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     irStatusLabel.setJustificationType(juce::Justification::centredLeft);
     irStatusLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
     addAndMakeVisible(irStatusLabel);
+
+    irStatusALabel.setJustificationType(juce::Justification::centredLeft);
+    irStatusALabel.setColour(juce::Label::textColourId, juce::Colours::white);
+    addAndMakeVisible(irStatusALabel);
+
+    irStatusBLabel.setJustificationType(juce::Justification::centredLeft);
+    irStatusBLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+    addAndMakeVisible(irStatusBLabel);
 
     tunerNoteLabel.setJustificationType(juce::Justification::centred);
     tunerNoteLabel.setFont(tunerNoteLabel.getFont().withHeight(36.0f).boldened());
@@ -188,6 +242,21 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     setupSlider(delayTimeSlider, delayTimeLabel);
     setupSlider(delayMixSlider, delayMixLabel);
     setupSlider(reverbMixSlider, reverbMixLabel);
+    setupSlider(irLowCutSlider, irLowCutLabel);
+    setupSlider(irHighCutSlider, irHighCutLabel);
+    setupSlider(irLevelSlider, irLevelLabel);
+    setupSlider(cabBlendSlider, cabBlendLabel);
+    setupSlider(cabPanSlider, cabPanLabel);
+    setupSlider(cabLevelASlider, cabLevelALabel);
+    setupSlider(cabLevelBSlider, cabLevelBLabel);
+
+    auto makeCompactLevelSlider = [](juce::Slider& slider)
+    {
+        slider.setSliderStyle(juce::Slider::LinearHorizontal);
+        slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 64, 20);
+    };
+    makeCompactLevelSlider(cabLevelASlider);
+    makeCompactLevelSlider(cabLevelBSlider);
 
     const auto bgPath = audioProcessor.getBackgroundImagePath();
     if (bgPath.isNotEmpty())
@@ -259,18 +328,32 @@ void MyAmpSimAudioProcessorEditor::resized()
     auto topBar = bounds.removeFromTop(36);
     audioSettingsButton.setBounds(topBar.removeFromLeft(150));
     topBar.removeFromLeft(10);
-    loadIrButton.setBounds(topBar.removeFromLeft(100));
+    loadIrAButton.setBounds(topBar.removeFromLeft(90));
+    topBar.removeFromLeft(6);
+    clearIrAButton.setBounds(topBar.removeFromLeft(90));
     topBar.removeFromLeft(8);
-    clearIrButton.setBounds(topBar.removeFromLeft(100));
+    loadIrBButton.setBounds(topBar.removeFromLeft(90));
+    topBar.removeFromLeft(6);
+    clearIrBButton.setBounds(topBar.removeFromLeft(90));
     savePresetButton.setBounds(topBar.removeFromRight(130));
     topBar.removeFromRight(8);
     loadPresetButton.setBounds(topBar.removeFromRight(130));
 
     auto irBar = bounds.removeFromTop(28);
-    irStatusLabel.setBounds(irBar.removeFromLeft(340));
+    irStatusLabel.setBounds(irBar.removeFromLeft(210));
     irBar.removeFromLeft(8);
     oversamplingLabel.setBounds(irBar.removeFromLeft(90));
     oversamplingCombo.setBounds(irBar.removeFromLeft(120));
+    irBar.removeFromLeft(8);
+    ampTypeLabel.setBounds(irBar.removeFromLeft(80));
+    ampTypeCombo.setBounds(irBar.removeFromLeft(120));
+
+    auto irSlotBar = bounds.removeFromTop(24);
+    irStatusALabel.setBounds(irSlotBar.removeFromLeft(250));
+    cabLevelASlider.setBounds(irSlotBar.removeFromLeft(220));
+    irSlotBar.removeFromLeft(8);
+    irStatusBLabel.setBounds(irSlotBar.removeFromLeft(250));
+    cabLevelBSlider.setBounds(irSlotBar.removeFromLeft(220));
 
     bounds.removeFromTop(6);
 
@@ -305,9 +388,18 @@ void MyAmpSimAudioProcessorEditor::resized()
     setKnob(driveSlider, 2, 0);
     setKnob(volumeSlider, 3, 0);
 
-    setKnob(delayTimeSlider, 0, 1);
-    setKnob(delayMixSlider, 1, 1);
-    setKnob(reverbMixSlider, 2, 1);
+    setKnob(delayTimeSlider, 1, 1);
+    setKnob(delayMixSlider, 2, 1);
+    setKnob(reverbMixSlider, 3, 1);
+    setKnob(irLowCutSlider, 0, 0);
+    setKnob(irHighCutSlider, 1, 0);
+    setKnob(irLevelSlider, 2, 0);
+    setKnob(cabPanSlider, 3, 0);
+    setKnob(cabBlendSlider, 0, 1);
+
+    irPhaseToggle.setBounds(knobGrid.getX() + 2 * (knobW + knobGapX), knobGrid.getY() + 8, knobW, 24);
+    cabFlipAButton.setBounds(knobGrid.getX() + 2 * (knobW + knobGapX), knobGrid.getY() + 34, knobW, 24);
+    cabFlipBButton.setBounds(knobGrid.getX() + 3 * (knobW + knobGapX), knobGrid.getY() + 34, knobW, 24);
 
     auto bottomArea = bounds;
 
@@ -352,28 +444,35 @@ void MyAmpSimAudioProcessorEditor::resized()
 
 void MyAmpSimAudioProcessorEditor::chooseCabinetIR()
 {
+    chooseCabinetIRSlot(0);
+}
+
+void MyAmpSimAudioProcessorEditor::chooseCabinetIRSlot(int slotIndex)
+{
     irChooser = std::make_unique<juce::FileChooser>(
-        "Choose a cabinet IR",
+        slotIndex == 0 ? "Choose cabinet IR for Slot A" : "Choose cabinet IR for Slot B",
         juce::File(),
         "*.wav");
 
     auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
 
-    irChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& chooser)
+    irChooser->launchAsync(chooserFlags, [this, slotIndex](const juce::FileChooser& chooser)
     {
         const auto selected = chooser.getResult();
 
         if (!selected.existsAsFile())
             return;
 
-        if (audioProcessor.loadCabinetIR(selected))
+        if (audioProcessor.loadCabinetIRSlot(slotIndex, selected))
             refreshIrStatus();
     });
 }
 
 void MyAmpSimAudioProcessorEditor::refreshIrStatus()
 {
-    irStatusLabel.setText("Cabinet IR: " + audioProcessor.getCurrentIRName(), juce::dontSendNotification);
+    irStatusLabel.setText("Cab Section", juce::dontSendNotification);
+    irStatusALabel.setText("A: " + audioProcessor.getCurrentIRNameForSlot(0), juce::dontSendNotification);
+    irStatusBLabel.setText("B: " + audioProcessor.getCurrentIRNameForSlot(1), juce::dontSendNotification);
 }
 
 void MyAmpSimAudioProcessorEditor::refreshTunerStatus()
@@ -541,6 +640,8 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     volumeLabel.setVisible(showAmp);
     gateLabel.setVisible(showAmp);
     boostLabel.setVisible(showAmp);
+    ampTypeLabel.setVisible(showAmp);
+    ampTypeCombo.setVisible(showAmp);
     tunerToggle.setVisible(showAmp);
     tunerNoteLabel.setVisible(showTuner);
     tunerDetailLabel.setVisible(showTuner);
@@ -548,12 +649,35 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     delayTimeSlider.setVisible(showFx);
     delayMixSlider.setVisible(showFx);
     reverbMixSlider.setVisible(showFx);
+    irLowCutSlider.setVisible(showFx);
+    irHighCutSlider.setVisible(showFx);
+    irLevelSlider.setVisible(showFx);
+    cabBlendSlider.setVisible(showFx);
+    cabPanSlider.setVisible(showFx);
+    cabLevelASlider.setVisible(showFx);
+    cabLevelBSlider.setVisible(showFx);
     delayTimeLabel.setVisible(showFx);
     delayMixLabel.setVisible(showFx);
     reverbMixLabel.setVisible(showFx);
-    loadIrButton.setVisible(showFx);
-    clearIrButton.setVisible(showFx);
+    irLowCutLabel.setVisible(showFx);
+    irHighCutLabel.setVisible(showFx);
+    irLevelLabel.setVisible(showFx);
+    cabBlendLabel.setVisible(showFx);
+    cabPanLabel.setVisible(showFx);
+    cabLevelALabel.setVisible(showFx);
+    cabLevelBLabel.setVisible(showFx);
+    loadIrButton.setVisible(false);
+    clearIrButton.setVisible(false);
+    loadIrAButton.setVisible(showFx);
+    clearIrAButton.setVisible(showFx);
+    loadIrBButton.setVisible(showFx);
+    clearIrBButton.setVisible(showFx);
+    irPhaseToggle.setVisible(showFx);
+    cabFlipAButton.setVisible(showFx);
+    cabFlipBButton.setVisible(showFx);
     irStatusLabel.setVisible(showFx);
+    irStatusALabel.setVisible(showFx);
+    irStatusBLabel.setVisible(showFx);
     oversamplingLabel.setVisible(showFx);
     oversamplingCombo.setVisible(showFx);
 

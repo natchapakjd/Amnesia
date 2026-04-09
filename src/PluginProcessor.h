@@ -39,6 +39,9 @@ public:
     bool loadCabinetIR(const juce::File& irFile);
     void clearCabinetIR();
     juce::String getCurrentIRName() const;
+    bool loadCabinetIRSlot(int slotIndex, const juce::File& irFile);
+    void clearCabinetIRSlot(int slotIndex);
+    juce::String getCurrentIRNameForSlot(int slotIndex) const;
     void setBackgroundImagePath(const juce::String& path);
     juce::String getBackgroundImagePath() const;
 
@@ -61,11 +64,17 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
 private:
-    void loadDefaultCabinetIR();
+    void loadDefaultCabinetIR(int slotIndex);
+    void applyCabinetSlotLoadIfPrepared(int slotIndex);
     void updateTuner(const juce::AudioBuffer<float>& buffer);
     void handleMidiLearnAndMapping(juce::MidiBuffer& midiMessages);
 
-    juce::dsp::Convolution cabinetConvolution;
+    juce::dsp::Convolution cabinetConvolutionA;
+    juce::dsp::Convolution cabinetConvolutionB;
+    juce::dsp::IIR::Filter<float> irLowCutL;
+    juce::dsp::IIR::Filter<float> irLowCutR;
+    juce::dsp::IIR::Filter<float> irHighCutL;
+    juce::dsp::IIR::Filter<float> irHighCutR;
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine { 192000 };
     juce::dsp::Reverb reverb;
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampling2x;
@@ -73,7 +82,8 @@ private:
     juce::dsp::ProcessSpec processSpec;
 
     mutable juce::CriticalSection stateLock;
-    juce::File currentIRFile;
+    juce::File currentIRFileA;
+    juce::File currentIRFileB;
     juce::String backgroundImagePath;
     bool isPrepared = false;
 
@@ -93,5 +103,8 @@ private:
 
     juce::UndoManager undoManager;
     int learningParamIndex = -1;
-    std::array<int, 6> midiCCMap { -1, -1, -1, -1, -1, -1 };
+    std::array<int, 10> midiCCMap { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+
+    juce::AudioBuffer<float> cabBufferA;
+    juce::AudioBuffer<float> cabBufferB;
 };
