@@ -1,0 +1,52 @@
+# Build output
+build/
+build-local/
+build-x64/
+out/
+bin/
+obj/
+
+# CMake cache/generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+
+# JUCE build artefacts
+*_artefacts/
+JuceLibraryCode/
+*.jucer
+
+# Plugin binaries
+*.vst3
+*.component
+*.dll
+*.so
+*.dylib
+*.aaxplugin
+
+# IDE/editor
+.vs/
+.idea/
+*.code-workspace
+
+# VS Code (keep workspace settings optional)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/c_cpp_properties.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs/temp
+*.log
+*.tmp
+*.swp
+
+# Vendor dependencies cloned locally
+vendor/JUCE/

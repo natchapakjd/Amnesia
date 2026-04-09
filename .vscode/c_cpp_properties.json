@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "x64",
+            "includePath": [
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/vendor/JUCE/modules",
+                "${workspaceFolder}/build-local/MyAmpSim_artefacts/JuceLibraryCode"
+            ],
+            "defines": [
+                "JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1",
+                "JUCE_WEB_BROWSER=0",
+                "JUCE_USE_CURL=0",
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "cl.exe",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}
