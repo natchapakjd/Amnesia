@@ -46,7 +46,15 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
       driveAttachment(audioProcessor.apvts, "drive", driveSlider),
     volumeAttachment(audioProcessor.apvts, "outputVolume", volumeSlider),
     gateAttachment(audioProcessor.apvts, "gateThreshold", gateSlider),
+        gateAttackAttachment(audioProcessor.apvts, "gateAttackMs", gateAttackSlider),
+        gateReleaseAttachment(audioProcessor.apvts, "gateReleaseMs", gateReleaseSlider),
+        gateHysteresisAttachment(audioProcessor.apvts, "gateHysteresisDb", gateHysteresisSlider),
+        gateRangeAttachment(audioProcessor.apvts, "gateRangeDb", gateRangeSlider),
     boostAttachment(audioProcessor.apvts, "boostDb", boostSlider),
+        bassAttachment(audioProcessor.apvts, "ampBassDb", bassSlider),
+        midAttachment(audioProcessor.apvts, "ampMidDb", midSlider),
+        trebleAttachment(audioProcessor.apvts, "ampTrebleDb", trebleSlider),
+        presenceAttachment(audioProcessor.apvts, "ampPresenceDb", presenceSlider),
     delayTimeAttachment(audioProcessor.apvts, "delayTimeMs", delayTimeSlider),
     delayMixAttachment(audioProcessor.apvts, "delayMix", delayMixSlider),
     reverbMixAttachment(audioProcessor.apvts, "reverbMix", reverbMixSlider),
@@ -59,9 +67,22 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     cabLevelBAttachment(audioProcessor.apvts, "cabLevelB", cabLevelBSlider),
     ampTypeAttachment(audioProcessor.apvts, "ampType", ampTypeCombo),
     irPhaseAttachment(audioProcessor.apvts, "irPhaseInvert", irPhaseToggle),
+    delaySyncAttachment(audioProcessor.apvts, "delaySync", delaySyncToggle),
+    delayDivisionAttachment(audioProcessor.apvts, "delayDivision", delayDivisionCombo),
     cabFlipAAttachment(audioProcessor.apvts, "cabFlipA", cabFlipAButton),
     cabFlipBAttachment(audioProcessor.apvts, "cabFlipB", cabFlipBButton),
-    oversamplingAttachment(audioProcessor.apvts, "oversamplingMode", oversamplingCombo)
+    oversamplingAttachment(audioProcessor.apvts, "oversamplingMode", oversamplingCombo),
+    reverbRoomSizeAttachment(audioProcessor.apvts, "reverbRoomSize", reverbRoomSizeSlider),
+    reverbDampingAttachment(audioProcessor.apvts, "reverbDamping", reverbDampingSlider),
+    reverbWidthAttachment(audioProcessor.apvts, "reverbWidth", reverbWidthSlider),
+    reverbPreDelayAttachment(audioProcessor.apvts, "reverbPreDelayMs", reverbPreDelaySlider),
+    inputTrimAttachment(audioProcessor.apvts, "inputTrimDb", inputTrimSlider),
+    limiterThreshAttachment(audioProcessor.apvts, "limiterThreshDb", limiterThreshSlider),
+    limiterEnabledAttachment(audioProcessor.apvts, "limiterEnabled", limiterEnabledToggle)
+    ,
+    delayFeedbackAttachment(audioProcessor.apvts, "delayFeedback", delayFeedbackSlider),
+    delayModRateAttachment(audioProcessor.apvts, "delayModRate", delayModRateSlider),
+    delayModDepthAttachment(audioProcessor.apvts, "delayModDepth", delayModDepthSlider)
 {
     setLookAndFeel(&ampLookAndFeel);
 
@@ -168,6 +189,18 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     oversamplingCombo.addItem("2x", 2);
     oversamplingCombo.addItem("4x", 3);
 
+    addAndMakeVisible(delaySyncToggle);
+    delaySyncToggle.setButtonText("Delay Sync");
+
+    delayDivisionLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(delayDivisionLabel);
+    addAndMakeVisible(delayDivisionCombo);
+    delayDivisionCombo.addItem("1/4", 1);
+    delayDivisionCombo.addItem("1/8", 2);
+    delayDivisionCombo.addItem("1/8D", 3);
+    delayDivisionCombo.addItem("1/8T", 4);
+    delayDivisionCombo.addItem("1/16", 5);
+
     addAndMakeVisible(undoButton);
     undoButton.onClick = [this] { audioProcessor.undoLastChange(); };
 
@@ -185,6 +218,14 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     midiParamCombo.addItem("Cab Pan", 8);
     midiParamCombo.addItem("Cab A Level", 9);
     midiParamCombo.addItem("Cab B Level", 10);
+    midiParamCombo.addItem("Delay Feedback", 11);
+    midiParamCombo.addItem("Delay Time", 12);
+    midiParamCombo.addItem("Reverb Room", 13);
+    midiParamCombo.addItem("Reverb Damping", 14);
+    midiParamCombo.addItem("Bass", 15);
+    midiParamCombo.addItem("Mid", 16);
+    midiParamCombo.addItem("Treble", 17);
+    midiParamCombo.addItem("Presence", 18);
     midiParamCombo.setSelectedId(1);
 
     addAndMakeVisible(midiLearnButton);
@@ -239,6 +280,10 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     setupSlider(volumeSlider, volumeLabel);
     setupSlider(gateSlider, gateLabel);
     setupSlider(boostSlider, boostLabel);
+    setupSlider(bassSlider, bassLabel);
+    setupSlider(midSlider, midLabel);
+    setupSlider(trebleSlider, trebleLabel);
+    setupSlider(presenceSlider, presenceLabel);
     setupSlider(delayTimeSlider, delayTimeLabel);
     setupSlider(delayMixSlider, delayMixLabel);
     setupSlider(reverbMixSlider, reverbMixLabel);
@@ -250,11 +295,74 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     setupSlider(cabLevelASlider, cabLevelALabel);
     setupSlider(cabLevelBSlider, cabLevelBLabel);
 
+    // Reverb advanced
+    setupSlider(reverbRoomSizeSlider, reverbRoomSizeLabel);
+    setupSlider(reverbDampingSlider, reverbDampingLabel);
+    setupSlider(reverbWidthSlider, reverbWidthLabel);
+    setupSlider(reverbPreDelaySlider, reverbPreDelayLabel);
+
+    // Input trim + limiter
+    // Delay extras
+    setupSlider(delayFeedbackSlider, delayFeedbackLabel);
+    setupSlider(delayModRateSlider, delayModRateLabel);
+    setupSlider(delayModDepthSlider, delayModDepthLabel);
+
+    setupSlider(inputTrimSlider, inputTrimLabel);
+    setupSlider(limiterThreshSlider, limiterThreshLabel);
+    addAndMakeVisible(limiterEnabledToggle);
+    limiterEnabledToggle.setColour(juce::ToggleButton::tickColourId, juce::Colours::orangered);
+
+    limiterClipLabel.setText("", juce::dontSendNotification);
+    limiterClipLabel.setColour(juce::Label::backgroundColourId, juce::Colours::transparentBlack);
+    limiterClipLabel.setColour(juce::Label::textColourId, juce::Colours::red);
+    limiterClipLabel.setFont(juce::Font(11.0f, juce::Font::bold));
+    limiterClipLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(limiterClipLabel);
+
+    // Preset browser
+    presetListModel.presets = MyAmpSimAudioProcessor::getFactoryPresets();
+    presetListBox.setModel(&presetListModel);
+    presetListBox.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff1a1a1a));
+    presetListBox.setColour(juce::ListBox::outlineColourId, juce::Colour(0xff404040));
+    presetListBox.setOutlineThickness(1);
+    addAndMakeVisible(presetListBox);
+    addAndMakeVisible(presetBrowserLabel);
+    presetBrowserLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa0a0a0));
+    presetBrowserLabel.setFont(juce::Font(13.0f, juce::Font::bold));
+
+    addAndMakeVisible(loadFactoryPresetButton);
+    loadFactoryPresetButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2a5fa5));
+    loadFactoryPresetButton.onClick = [this]
+    {
+        const int row = presetListBox.getSelectedRow();
+        if (row >= 0)
+            audioProcessor.loadFactoryPreset(row);
+    };
+
+    spectrumAnalyzer = std::make_unique<SpectrumAnalyzer>(audioProcessor);
+    addAndMakeVisible(spectrumAnalyzer.get());
+
     auto makeCompactLevelSlider = [](juce::Slider& slider)
     {
         slider.setSliderStyle(juce::Slider::LinearHorizontal);
         slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 64, 20);
     };
+
+    auto makeCompactGateSlider = [](juce::Slider& slider)
+    {
+        slider.setSliderStyle(juce::Slider::LinearHorizontal);
+        slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 64, 20);
+    };
+
+    setupSlider(gateAttackSlider, gateAttackLabel);
+    setupSlider(gateReleaseSlider, gateReleaseLabel);
+    setupSlider(gateHysteresisSlider, gateHysteresisLabel);
+    setupSlider(gateRangeSlider, gateRangeLabel);
+    makeCompactGateSlider(gateAttackSlider);
+    makeCompactGateSlider(gateReleaseSlider);
+    makeCompactGateSlider(gateHysteresisSlider);
+    makeCompactGateSlider(gateRangeSlider);
+
     makeCompactLevelSlider(cabLevelASlider);
     makeCompactLevelSlider(cabLevelBSlider);
 
@@ -305,6 +413,39 @@ void MyAmpSimAudioProcessorEditor::paint(juce::Graphics& g)
 
     drawMeter(g, inputMeterBounds, audioProcessor.getInputMeterLevel(), "IN");
     drawMeter(g, outputMeterBounds, audioProcessor.getOutputMeterLevel(), "OUT");
+    
+    if (!correlationMeterBounds.isEmpty())
+    {
+        auto r = correlationMeterBounds;
+        g.setColour(juce::Colours::dimgrey);
+        g.fillRoundedRectangle(r.toFloat(), 4.0f);
+
+        auto inner = r.reduced(3);
+        g.setColour(juce::Colours::black.withAlpha(0.4f));
+        g.fillRect(inner);
+
+        const float corr = juce::jlimit(-1.0f, 1.0f, audioProcessor.correlationValue.load());
+        const int centerY = inner.getCentreY();
+        const int halfH = inner.getHeight() / 2;
+        const int barLen = static_cast<int>(std::round(halfH * std::abs(corr)));
+
+        juce::Colour corrColour = juce::Colours::yellow;
+        if (corr > 0.3f)
+            corrColour = juce::Colours::limegreen;
+        else if (corr < -0.3f)
+            corrColour = juce::Colours::orangered;
+
+        g.setColour(corrColour);
+        if (corr >= 0.0f)
+            g.fillRect(inner.withY(centerY - barLen).withHeight(barLen));
+        else
+            g.fillRect(inner.withY(centerY).withHeight(barLen));
+
+        g.setColour(juce::Colours::white.withAlpha(0.4f));
+        g.drawHorizontalLine(centerY, static_cast<float>(inner.getX()), static_cast<float>(inner.getRight()));
+        g.setFont(10.0f);
+        g.drawFittedText("CORR", r.withY(r.getBottom() - 16).withHeight(14), juce::Justification::centred, 1);
+    }
 }
 
 void MyAmpSimAudioProcessorEditor::resized()
@@ -345,34 +486,51 @@ void MyAmpSimAudioProcessorEditor::resized()
     oversamplingLabel.setBounds(irBar.removeFromLeft(90));
     oversamplingCombo.setBounds(irBar.removeFromLeft(120));
     irBar.removeFromLeft(8);
+    delaySyncToggle.setBounds(irBar.removeFromLeft(110));
+    irBar.removeFromLeft(6);
+    delayDivisionLabel.setBounds(irBar.removeFromLeft(70));
+    delayDivisionCombo.setBounds(irBar.removeFromLeft(90));
+    irBar.removeFromLeft(8);
     ampTypeLabel.setBounds(irBar.removeFromLeft(80));
     ampTypeCombo.setBounds(irBar.removeFromLeft(120));
 
-    auto irSlotBar = bounds.removeFromTop(24);
-    irStatusALabel.setBounds(irSlotBar.removeFromLeft(250));
-    cabLevelASlider.setBounds(irSlotBar.removeFromLeft(220));
-    irSlotBar.removeFromLeft(8);
-    irStatusBLabel.setBounds(irSlotBar.removeFromLeft(250));
-    cabLevelBSlider.setBounds(irSlotBar.removeFromLeft(220));
+    auto slotBar = bounds.removeFromTop(24);
+    auto fxSlotBar = slotBar;
+    irStatusALabel.setBounds(fxSlotBar.removeFromLeft(250));
+    cabLevelASlider.setBounds(fxSlotBar.removeFromLeft(220));
+    fxSlotBar.removeFromLeft(8);
+    irStatusBLabel.setBounds(fxSlotBar.removeFromLeft(250));
+    cabLevelBSlider.setBounds(fxSlotBar.removeFromLeft(220));
+
+    auto ampGateBar = slotBar;
+    gateAttackSlider.setBounds(ampGateBar.removeFromLeft(170));
+    ampGateBar.removeFromLeft(8);
+    gateReleaseSlider.setBounds(ampGateBar.removeFromLeft(170));
+    ampGateBar.removeFromLeft(8);
+    gateHysteresisSlider.setBounds(ampGateBar.removeFromLeft(170));
+    ampGateBar.removeFromLeft(8);
+    gateRangeSlider.setBounds(ampGateBar.removeFromLeft(170));
 
     bounds.removeFromTop(6);
 
     bounds.removeFromTop(8);
 
-    auto metersArea = bounds.removeFromRight(74);
+    auto metersArea = bounds.removeFromRight(110);
     metersArea.removeFromTop(6);
 
     auto meterTop = metersArea.removeFromTop(180);
     inputMeterBounds = meterTop.removeFromLeft(30);
     meterTop.removeFromLeft(10);
     outputMeterBounds = meterTop.removeFromLeft(30);
+    meterTop.removeFromLeft(8);
+    correlationMeterBounds = meterTop.removeFromLeft(24);
 
     const int columns = 4;
-    const int rows = 2;
+    const int rows = 4;
     const int knobGapX = 18;
     const int knobGapY = 14;
 
-    auto knobGrid = bounds.removeFromTop(300);
+    auto knobGrid = bounds.removeFromTop(460);
     const int knobW = (knobGrid.getWidth() - knobGapX * (columns - 1)) / columns;
     const int knobH = (knobGrid.getHeight() - knobGapY * (rows - 1)) / rows;
 
@@ -387,10 +545,21 @@ void MyAmpSimAudioProcessorEditor::resized()
     setKnob(boostSlider, 1, 0);
     setKnob(driveSlider, 2, 0);
     setKnob(volumeSlider, 3, 0);
+    setKnob(bassSlider, 0, 1);
+    setKnob(midSlider, 1, 1);
+    setKnob(trebleSlider, 2, 1);
+    setKnob(presenceSlider, 3, 1);
 
     setKnob(delayTimeSlider, 1, 1);
     setKnob(delayMixSlider, 2, 1);
     setKnob(reverbMixSlider, 3, 1);
+    setKnob(reverbRoomSizeSlider, 0, 2);
+    setKnob(reverbDampingSlider, 1, 2);
+    setKnob(reverbWidthSlider, 2, 2);
+    setKnob(reverbPreDelaySlider, 3, 2);
+    setKnob(delayFeedbackSlider, 1, 3);
+    setKnob(delayModRateSlider, 2, 3);
+    setKnob(delayModDepthSlider, 3, 3);
     setKnob(irLowCutSlider, 0, 0);
     setKnob(irHighCutSlider, 1, 0);
     setKnob(irLevelSlider, 2, 0);
@@ -435,6 +604,29 @@ void MyAmpSimAudioProcessorEditor::resized()
     loadBackgroundButton.setBounds(row3.removeFromLeft(148));
     row3.removeFromLeft(8);
     clearBackgroundButton.setBounds(row3.removeFromLeft(138));
+
+    toolsArea.removeFromTop(8);
+    auto ioRow = toolsArea.removeFromTop(26);
+    inputTrimLabel.setBounds(ioRow.removeFromLeft(70));
+    inputTrimSlider.setBounds(ioRow.removeFromLeft(150));
+    ioRow.removeFromLeft(10);
+    limiterEnabledToggle.setBounds(ioRow.removeFromLeft(80));
+    ioRow.removeFromLeft(8);
+    limiterClipLabel.setBounds(ioRow.removeFromLeft(44));
+    ioRow.removeFromLeft(4);
+    limiterThreshLabel.setBounds(ioRow.removeFromLeft(80));
+    limiterThreshSlider.setBounds(ioRow.removeFromLeft(130));
+
+    toolsArea.removeFromTop(8);
+    spectrumAnalyzer->setBounds(toolsArea.removeFromTop(80));
+    toolsArea.removeFromTop(6);
+    presetBrowserLabel.setBounds(toolsArea.removeFromTop(18));
+    toolsArea.removeFromTop(4);
+    auto presetListArea = toolsArea.removeFromTop(120);
+    auto presetButtonArea = presetListArea.removeFromBottom(28);
+    presetListBox.setBounds(presetListArea);
+    presetListArea = presetButtonArea;
+    loadFactoryPresetButton.setBounds(presetListArea.removeFromLeft(130));
 
     toolsArea.removeFromTop(6);
     midiMapStatusLabel.setBounds(toolsArea.removeFromTop(22));
@@ -545,24 +737,47 @@ void MyAmpSimAudioProcessorEditor::clearBackgroundImage()
 
 void MyAmpSimAudioProcessorEditor::savePresetToFile()
 {
-    presetChooser = std::make_unique<juce::FileChooser>("Save preset", juce::File(), "*.amnesia");
-    const auto chooserFlags = juce::FileBrowserComponent::saveMode
-                            | juce::FileBrowserComponent::canSelectFiles
-                            | juce::FileBrowserComponent::warnAboutOverwriting;
+    auto nameDialog = std::make_unique<juce::AlertWindow>("Save Preset",
+                                                           "Enter preset name",
+                                                           juce::MessageBoxIconType::NoIcon);
+    nameDialog->addTextEditor("presetName", "MyPreset", "Name:");
+    nameDialog->addButton("Save", 1, juce::KeyPress(juce::KeyPress::returnKey));
+    nameDialog->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
 
-    presetChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& chooser)
+    auto* dialogPtr = nameDialog.release();
+    dialogPtr->enterModalState(true, juce::ModalCallbackFunction::create([this, dialogPtr](int result)
     {
-        auto file = chooser.getResult();
-        if (file == juce::File())
+        std::unique_ptr<juce::AlertWindow> dialogOwner(dialogPtr);
+        if (result != 1)
             return;
 
-        if (file.getFileExtension().isEmpty())
-            file = file.withFileExtension(".amnesia");
+        juce::String presetName = dialogOwner->getTextEditorContents("presetName").trim();
+        if (presetName.isEmpty())
+            presetName = "MyPreset";
 
-        juce::MemoryBlock data;
-        audioProcessor.getStateInformation(data);
-        file.replaceWithData(data.getData(), data.getSize());
-    });
+        juce::File defaultFile = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
+                                     .getChildFile(presetName)
+                                     .withFileExtension(".amnesia");
+
+        presetChooser = std::make_unique<juce::FileChooser>("Save preset", defaultFile, "*.amnesia");
+        const auto chooserFlags = juce::FileBrowserComponent::saveMode
+                                | juce::FileBrowserComponent::canSelectFiles
+                                | juce::FileBrowserComponent::warnAboutOverwriting;
+
+        presetChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& chooser)
+        {
+            auto file = chooser.getResult();
+            if (file == juce::File())
+                return;
+
+            if (file.getFileExtension().isEmpty())
+                file = file.withFileExtension(".amnesia");
+
+            juce::MemoryBlock data;
+            audioProcessor.getStateInformation(data);
+            file.replaceWithData(data.getData(), data.getSize());
+        });
+    }), true);
 }
 
 void MyAmpSimAudioProcessorEditor::loadPresetFromFile()
@@ -635,11 +850,27 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     driveSlider.setVisible(showAmp);
     volumeSlider.setVisible(showAmp);
     gateSlider.setVisible(showAmp);
+    gateAttackSlider.setVisible(showAmp);
+    gateReleaseSlider.setVisible(showAmp);
+    gateHysteresisSlider.setVisible(showAmp);
+    gateRangeSlider.setVisible(showAmp);
     boostSlider.setVisible(showAmp);
+    bassSlider.setVisible(showAmp);
+    midSlider.setVisible(showAmp);
+    trebleSlider.setVisible(showAmp);
+    presenceSlider.setVisible(showAmp);
     driveLabel.setVisible(showAmp);
     volumeLabel.setVisible(showAmp);
     gateLabel.setVisible(showAmp);
+    gateAttackLabel.setVisible(showAmp);
+    gateReleaseLabel.setVisible(showAmp);
+    gateHysteresisLabel.setVisible(showAmp);
+    gateRangeLabel.setVisible(showAmp);
     boostLabel.setVisible(showAmp);
+    bassLabel.setVisible(showAmp);
+    midLabel.setVisible(showAmp);
+    trebleLabel.setVisible(showAmp);
+    presenceLabel.setVisible(showAmp);
     ampTypeLabel.setVisible(showAmp);
     ampTypeCombo.setVisible(showAmp);
     tunerToggle.setVisible(showAmp);
@@ -647,8 +878,15 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     tunerDetailLabel.setVisible(showTuner);
 
     delayTimeSlider.setVisible(showFx);
+    delayFeedbackSlider.setVisible(showFx);
+    delayModRateSlider.setVisible(showFx);
+    delayModDepthSlider.setVisible(showFx);
     delayMixSlider.setVisible(showFx);
     reverbMixSlider.setVisible(showFx);
+    reverbRoomSizeSlider.setVisible(showFx);
+    reverbDampingSlider.setVisible(showFx);
+    reverbWidthSlider.setVisible(showFx);
+    reverbPreDelaySlider.setVisible(showFx);
     irLowCutSlider.setVisible(showFx);
     irHighCutSlider.setVisible(showFx);
     irLevelSlider.setVisible(showFx);
@@ -657,8 +895,15 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     cabLevelASlider.setVisible(showFx);
     cabLevelBSlider.setVisible(showFx);
     delayTimeLabel.setVisible(showFx);
+    delayFeedbackLabel.setVisible(showFx);
+    delayModRateLabel.setVisible(showFx);
+    delayModDepthLabel.setVisible(showFx);
     delayMixLabel.setVisible(showFx);
     reverbMixLabel.setVisible(showFx);
+    reverbRoomSizeLabel.setVisible(showFx);
+    reverbDampingLabel.setVisible(showFx);
+    reverbWidthLabel.setVisible(showFx);
+    reverbPreDelayLabel.setVisible(showFx);
     irLowCutLabel.setVisible(showFx);
     irHighCutLabel.setVisible(showFx);
     irLevelLabel.setVisible(showFx);
@@ -680,6 +925,10 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     irStatusBLabel.setVisible(showFx);
     oversamplingLabel.setVisible(showFx);
     oversamplingCombo.setVisible(showFx);
+    delaySyncToggle.setVisible(showFx);
+    delayDivisionLabel.setVisible(showFx);
+    delayDivisionCombo.setVisible(showFx);
+    limiterClipLabel.setVisible(showTools);
 
     savePresetButton.setVisible(showTools);
     loadPresetButton.setVisible(showTools);
@@ -694,6 +943,15 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     midiLearnButton.setVisible(showTools);
     midiMapStatusLabel.setVisible(showTools);
     backgroundStatusLabel.setVisible(showTools);
+    inputTrimSlider.setVisible(showTools);
+    inputTrimLabel.setVisible(showTools);
+    limiterThreshSlider.setVisible(showTools);
+    limiterThreshLabel.setVisible(showTools);
+    limiterEnabledToggle.setVisible(showTools);
+    presetListBox.setVisible(showTools);
+    presetBrowserLabel.setVisible(showTools);
+    loadFactoryPresetButton.setVisible(showTools);
+    spectrumAnalyzer->setVisible(showTools);
 
     ampTabButton.setColour(juce::TextButton::buttonColourId, showAmp ? juce::Colours::darkorange : juce::Colours::darkgrey);
     fxTabButton.setColour(juce::TextButton::buttonColourId, showFx ? juce::Colours::darkorange : juce::Colours::darkgrey);
@@ -704,7 +962,19 @@ void MyAmpSimAudioProcessorEditor::timerCallback()
 {
     refreshTunerStatus();
     refreshToolsStatus();
-    repaint(inputMeterBounds.getUnion(outputMeterBounds));
+    const bool limiterOn = audioProcessor.limiterActive.load();
+    limiterClipLabel.setText(limiterOn ? "CLIP" : "", juce::dontSendNotification);
+    limiterClipLabel.setColour(juce::Label::textColourId, limiterOn ? juce::Colours::red : juce::Colours::transparentBlack);
+    
+    repaint(inputMeterBounds.getUnion(outputMeterBounds).getUnion(correlationMeterBounds));
+
+    // Feed spectrum analyzer from processor FIFO
+    if (spectrumAnalyzer->isVisible())
+    {
+        static std::array<float, MyAmpSimAudioProcessor::kSpecFifoSize> tmpBuf;
+        if (audioProcessor.consumeSpectrumBlock(tmpBuf.data()))
+            spectrumAnalyzer->pushSamples(tmpBuf.data(), MyAmpSimAudioProcessor::kSpecFifoSize);
+    }
 }
 
 void MyAmpSimAudioProcessorEditor::drawMeter(juce::Graphics& g,

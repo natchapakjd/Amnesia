@@ -59,6 +59,29 @@ public:
     void beginMidiLearnForParam(int paramIndex);
     juce::String getMidiMappingDescription() const;
 
+    struct FactoryPreset
+    {
+        juce::String name;
+        juce::String category;
+        std::map<juce::String, float> params;
+    };
+
+    static std::vector<FactoryPreset> getFactoryPresets();
+    void loadFactoryPreset(int index);
+
+    // Spectrum FIFO — accessed from editor timer thread
+    static constexpr int kSpecFifoSize = 512;
+    bool consumeSpectrumBlock(float* dest) noexcept
+    {
+        if (specFifoWriteCount.load() == 0) return false;
+        std::copy(spectrumFifo.begin(), spectrumFifo.end(), dest);
+        specFifoWriteCount.store(0);
+        return true;
+    }
+
+    std::atomic<bool> limiterActive { false };
+    std::atomic<float> correlationValue { 1.0f };
+
     juce::AudioProcessorValueTreeState apvts;
 
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -75,6 +98,14 @@ private:
     juce::dsp::IIR::Filter<float> irLowCutR;
     juce::dsp::IIR::Filter<float> irHighCutL;
     juce::dsp::IIR::Filter<float> irHighCutR;
+    juce::dsp::IIR::Filter<float> ampBassL;
+    juce::dsp::IIR::Filter<float> ampBassR;
+    juce::dsp::IIR::Filter<float> ampMidL;
+    juce::dsp::IIR::Filter<float> ampMidR;
+    juce::dsp::IIR::Filter<float> ampTrebleL;
+    juce::dsp::IIR::Filter<float> ampTrebleR;
+    juce::dsp::IIR::Filter<float> ampPresenceL;
+    juce::dsp::IIR::Filter<float> ampPresenceR;
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine { 192000 };
     juce::dsp::Reverb reverb;
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampling2x;
@@ -99,12 +130,21 @@ private:
 
     float gateEnvelope = 0.0f;
     float gateGain = 1.0f;
+    bool gateIsOpen = true;
+    float delayLfoPhase = 0.0f;
     int processingChannels = 2;
 
     juce::UndoManager undoManager;
     int learningParamIndex = -1;
-    std::array<int, 10> midiCCMap { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+    std::array<int, 18> midiCCMap;  // init in constructor
 
     juce::AudioBuffer<float> cabBufferA;
     juce::AudioBuffer<float> cabBufferB;
+
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> reverbPreDelay { 22050 };
+    float limiterEnvelope = 0.0f;
+
+    std::array<float, kSpecFifoSize> spectrumFifo {};
+    std::atomic<int> specFifoWriteCount { 0 };
+    int specFifoFill = 0;
 };
