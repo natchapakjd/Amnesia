@@ -2,7 +2,9 @@
 #include "PluginEditor.h"
 
 #include <cmath>
+#include <filesystem>
 #include <limits>
+#include <memory>
 
 namespace
 {
@@ -22,7 +24,7 @@ float getBufferPeak (const juce::AudioBuffer<float>& buffer, int startChannel, i
 }
 }
 
-MyAmpSimAudioProcessor::MyAmpSimAudioProcessor()
+VayuAudioProcessor::VayuAudioProcessor()
     : AudioProcessor(BusesProperties()
     #if ! JucePlugin_IsMidiEffect
     #if ! JucePlugin_IsSynth
@@ -36,7 +38,7 @@ MyAmpSimAudioProcessor::MyAmpSimAudioProcessor()
     midiCCMap.fill(-1);
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout MyAmpSimAudioProcessor::createParameterLayout()
+juce::AudioProcessorValueTreeState::ParameterLayout VayuAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
@@ -376,14 +378,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout MyAmpSimAudioProcessor::crea
     return layout;
 }
 
-MyAmpSimAudioProcessor::~MyAmpSimAudioProcessor() = default;
+VayuAudioProcessor::~VayuAudioProcessor() = default;
 
-const juce::String MyAmpSimAudioProcessor::getName() const
+const juce::String VayuAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool MyAmpSimAudioProcessor::acceptsMidi() const
+bool VayuAudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -392,7 +394,7 @@ bool MyAmpSimAudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool MyAmpSimAudioProcessor::producesMidi() const
+bool VayuAudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -401,7 +403,7 @@ bool MyAmpSimAudioProcessor::producesMidi() const
    #endif
 }
 
-bool MyAmpSimAudioProcessor::isMidiEffect() const
+bool VayuAudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -410,53 +412,53 @@ bool MyAmpSimAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double MyAmpSimAudioProcessor::getTailLengthSeconds() const
+double VayuAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int MyAmpSimAudioProcessor::getNumPrograms()
+int VayuAudioProcessor::getNumPrograms()
 {
     return 1;
 }
 
-int MyAmpSimAudioProcessor::getCurrentProgram()
+int VayuAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void MyAmpSimAudioProcessor::setCurrentProgram(int index)
+void VayuAudioProcessor::setCurrentProgram(int index)
 {
     juce::ignoreUnused(index);
 }
 
-const juce::String MyAmpSimAudioProcessor::getProgramName(int index)
+const juce::String VayuAudioProcessor::getProgramName(int index)
 {
     juce::ignoreUnused(index);
     return {};
 }
 
-void MyAmpSimAudioProcessor::changeProgramName(int index, const juce::String& newName)
+void VayuAudioProcessor::changeProgramName(int index, const juce::String& newName)
 {
     juce::ignoreUnused(index, newName);
 }
 
-bool MyAmpSimAudioProcessor::loadCabinetIR(const juce::File& irFile)
+bool VayuAudioProcessor::loadCabinetIR(const juce::File& irFile)
 {
     return loadCabinetIRSlot(0, irFile);
 }
 
-void MyAmpSimAudioProcessor::clearCabinetIR()
+void VayuAudioProcessor::clearCabinetIR()
 {
     clearCabinetIRSlot(0);
 }
 
-juce::String MyAmpSimAudioProcessor::getCurrentIRName() const
+juce::String VayuAudioProcessor::getCurrentIRName() const
 {
     return getCurrentIRNameForSlot(0);
 }
 
-bool MyAmpSimAudioProcessor::loadCabinetIRSlot(int slotIndex, const juce::File& irFile)
+bool VayuAudioProcessor::loadCabinetIRSlot(int slotIndex, const juce::File& irFile)
 {
     if (slotIndex < 0 || slotIndex > 1 || !irFile.existsAsFile())
         return false;
@@ -474,7 +476,7 @@ bool MyAmpSimAudioProcessor::loadCabinetIRSlot(int slotIndex, const juce::File& 
     return true;
 }
 
-void MyAmpSimAudioProcessor::clearCabinetIRSlot(int slotIndex)
+void VayuAudioProcessor::clearCabinetIRSlot(int slotIndex)
 {
     if (slotIndex < 0 || slotIndex > 1)
         return;
@@ -492,7 +494,7 @@ void MyAmpSimAudioProcessor::clearCabinetIRSlot(int slotIndex)
         loadDefaultCabinetIR(slotIndex);
 }
 
-juce::String MyAmpSimAudioProcessor::getCurrentIRNameForSlot(int slotIndex) const
+juce::String VayuAudioProcessor::getCurrentIRNameForSlot(int slotIndex) const
 {
     const juce::ScopedLock lock(stateLock);
 
@@ -510,29 +512,29 @@ juce::String MyAmpSimAudioProcessor::getCurrentIRNameForSlot(int slotIndex) cons
     return "Slot A (Default)";
 }
 
-void MyAmpSimAudioProcessor::setBackgroundImagePath(const juce::String& path)
+void VayuAudioProcessor::setBackgroundImagePath(const juce::String& path)
 {
     const juce::ScopedLock lock(stateLock);
     backgroundImagePath = path;
 }
 
-juce::String MyAmpSimAudioProcessor::getBackgroundImagePath() const
+juce::String VayuAudioProcessor::getBackgroundImagePath() const
 {
     const juce::ScopedLock lock(stateLock);
     return backgroundImagePath;
 }
 
-float MyAmpSimAudioProcessor::getTunerFrequencyHz() const
+float VayuAudioProcessor::getTunerFrequencyHz() const
 {
     return tunerFrequencyHz.load();
 }
 
-float MyAmpSimAudioProcessor::getTunerCents() const
+float VayuAudioProcessor::getTunerCents() const
 {
     return tunerCents.load();
 }
 
-juce::String MyAmpSimAudioProcessor::getTunerNoteName() const
+juce::String VayuAudioProcessor::getTunerNoteName() const
 {
     const auto idx = tunerNoteIndex.load();
 
@@ -542,45 +544,45 @@ juce::String MyAmpSimAudioProcessor::getTunerNoteName() const
     return kNoteNames[idx];
 }
 
-float MyAmpSimAudioProcessor::getInputMeterLevel() const
+float VayuAudioProcessor::getInputMeterLevel() const
 {
     return inputMeterLevel.load();
 }
 
-float MyAmpSimAudioProcessor::getOutputMeterLevel() const
+float VayuAudioProcessor::getOutputMeterLevel() const
 {
     return outputMeterLevel.load();
 }
 
-bool MyAmpSimAudioProcessor::canUndo() const
+bool VayuAudioProcessor::canUndo() const
 {
     return undoManager.canUndo();
 }
 
-bool MyAmpSimAudioProcessor::canRedo() const
+bool VayuAudioProcessor::canRedo() const
 {
     return undoManager.canRedo();
 }
 
-void MyAmpSimAudioProcessor::undoLastChange()
+void VayuAudioProcessor::undoLastChange()
 {
     if (undoManager.canUndo())
         undoManager.undo();
 }
 
-void MyAmpSimAudioProcessor::redoLastChange()
+void VayuAudioProcessor::redoLastChange()
 {
     if (undoManager.canRedo())
         undoManager.redo();
 }
 
-void MyAmpSimAudioProcessor::beginMidiLearnForParam(int paramIndex)
+void VayuAudioProcessor::beginMidiLearnForParam(int paramIndex)
 {
     if (paramIndex >= 0 && paramIndex < static_cast<int>(midiCCMap.size()))
         learningParamIndex = paramIndex;
 }
 
-juce::String MyAmpSimAudioProcessor::getMidiMappingDescription() const
+juce::String VayuAudioProcessor::getMidiMappingDescription() const
 {
     static constexpr const char* names[] =
     {
@@ -604,7 +606,7 @@ juce::String MyAmpSimAudioProcessor::getMidiMappingDescription() const
     return items.joinIntoString(" | ");
 }
 
-std::vector<MyAmpSimAudioProcessor::FactoryPreset> MyAmpSimAudioProcessor::getFactoryPresets()
+std::vector<VayuAudioProcessor::FactoryPreset> VayuAudioProcessor::getFactoryPresets()
 {
     std::vector<FactoryPreset> presets;
 
@@ -668,7 +670,7 @@ std::vector<MyAmpSimAudioProcessor::FactoryPreset> MyAmpSimAudioProcessor::getFa
     return presets;
 }
 
-void MyAmpSimAudioProcessor::loadFactoryPreset(int index)
+void VayuAudioProcessor::loadFactoryPreset(int index)
 {
     const auto presets = getFactoryPresets();
     if (index < 0 || index >= static_cast<int>(presets.size()))
@@ -684,7 +686,55 @@ void MyAmpSimAudioProcessor::loadFactoryPreset(int index)
     }
 }
 
-void MyAmpSimAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMessages)
+void VayuAudioProcessor::loadNamModel(const juce::String& path)
+{
+#if VAYU_HAS_NAM
+    if (path.isEmpty())
+        return;
+
+    try
+    {
+        auto loaded = nam::get_dsp(std::filesystem::path(path.toStdString()));
+        if (loaded == nullptr)
+            throw std::runtime_error("NAM model load returned null DSP");
+
+        if (isPrepared && processSpec.sampleRate > 0.0 && processSpec.maximumBlockSize > 0)
+            loaded->Reset(processSpec.sampleRate, static_cast<int>(processSpec.maximumBlockSize));
+
+        std::shared_ptr<nam::DSP> sharedLoaded(std::move(loaded));
+        std::atomic_store_explicit(&namEngine, sharedLoaded, std::memory_order_release);
+
+        const juce::ScopedLock lock(stateLock);
+        namModelPath = path;
+    }
+    catch (const std::exception& e)
+    {
+        juce::Logger::writeToLog("NAM load failed: " + juce::String(e.what()));
+    }
+    catch (...)
+    {
+        juce::Logger::writeToLog("NAM load failed: unknown exception");
+    }
+#else
+    juce::ignoreUnused(path);
+    juce::Logger::writeToLog("NAM load requested, but NeuralAmpModelerCore headers are not available in this build.");
+#endif
+}
+
+void VayuAudioProcessor::clearNamModel()
+{
+    std::atomic_store_explicit(&namEngine, std::shared_ptr<nam::DSP>{}, std::memory_order_release);
+    const juce::ScopedLock lock(stateLock);
+    namModelPath.clear();
+}
+
+juce::String VayuAudioProcessor::getNamModelPath() const
+{
+    const juce::ScopedLock lock(stateLock);
+    return namModelPath;
+}
+
+void VayuAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMessages)
 {
     static constexpr const char* parameterIds[] =
     {
@@ -721,7 +771,7 @@ void MyAmpSimAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMes
     }
 }
 
-void MyAmpSimAudioProcessor::applyCabinetSlotLoadIfPrepared(int slotIndex)
+void VayuAudioProcessor::applyCabinetSlotLoadIfPrepared(int slotIndex)
 {
     if (!isPrepared)
         return;
@@ -744,7 +794,7 @@ void MyAmpSimAudioProcessor::applyCabinetSlotLoadIfPrepared(int slotIndex)
     }
 }
 
-void MyAmpSimAudioProcessor::loadDefaultCabinetIR(int slotIndex)
+void VayuAudioProcessor::loadDefaultCabinetIR(int slotIndex)
 {
     juce::AudioBuffer<float> identityIR(1, 1);
     identityIR.clear();
@@ -758,7 +808,7 @@ void MyAmpSimAudioProcessor::loadDefaultCabinetIR(int slotIndex)
                                     juce::dsp::Convolution::Normalise::no);
 }
 
-void MyAmpSimAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void VayuAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     processSpec.sampleRate = sampleRate;
     processSpec.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
@@ -802,6 +852,17 @@ void MyAmpSimAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     reverbPreDelay.prepare(processSpec);
     reverbPreDelay.setMaximumDelayInSamples(static_cast<int>(sampleRate * 0.12));  // 120 ms max
 
+#if VAYU_HAS_NAM
+    namScratchA.assign(static_cast<size_t>(juce::jmax(1, samplesPerBlock)), 0.0f);
+    namScratchB.assign(static_cast<size_t>(juce::jmax(1, samplesPerBlock)), 0.0f);
+
+    if (auto activeNam = std::atomic_load_explicit(&namEngine, std::memory_order_acquire))
+        activeNam->Reset(sampleRate, samplesPerBlock);
+#else
+    namScratchA.clear();
+    namScratchB.clear();
+#endif
+
     limiterEnvelope = 0.0f;
     gateEnvelope = 0.0f;
     gateGain = 1.0f;
@@ -828,7 +889,7 @@ void MyAmpSimAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
         loadDefaultCabinetIR(1);
 }
 
-void MyAmpSimAudioProcessor::releaseResources()
+void VayuAudioProcessor::releaseResources()
 {
     isPrepared = false;
     inputMeterLevel.store(0.0f);
@@ -837,9 +898,11 @@ void MyAmpSimAudioProcessor::releaseResources()
     gateGain = 1.0f;
     oversampling2x.reset();
     oversampling4x.reset();
+    namScratchA.clear();
+    namScratchB.clear();
 }
 
-void MyAmpSimAudioProcessor::updateTuner(const juce::AudioBuffer<float>& buffer)
+void VayuAudioProcessor::updateTuner(const juce::AudioBuffer<float>& buffer)
 {
     if (buffer.getNumChannels() == 0 || getSampleRate() <= 0.0)
         return;
@@ -913,7 +976,7 @@ void MyAmpSimAudioProcessor::updateTuner(const juce::AudioBuffer<float>& buffer)
 }
 
 #if ! JucePlugin_IsMidiEffect
-bool MyAmpSimAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+bool VayuAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
    #if JucePlugin_IsSynth
     juce::ignoreUnused(layouts);
@@ -935,7 +998,7 @@ bool MyAmpSimAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) 
 }
 #endif
 
-void MyAmpSimAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
 
@@ -1126,6 +1189,45 @@ void MyAmpSimAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     {
         processAmpStage(inOutBlock);
     }
+
+    // NAM stage (real-time safe): no allocation, no locks, stable shared_ptr snapshot per block.
+#if VAYU_HAS_NAM
+    if (auto activeNam = std::atomic_load_explicit(&namEngine, std::memory_order_acquire))
+    {
+        if (numSamples <= static_cast<int>(namScratchA.size()))
+        {
+            const int namIn = activeNam->NumInputChannels();
+            const int namOut = activeNam->NumOutputChannels();
+
+            if (namIn >= 2 && namOut >= 2 && totalNumOutputChannels > 1)
+            {
+                auto* inL = buffer.getWritePointer(0);
+                auto* inR = buffer.getWritePointer(1);
+                auto* outL = namScratchA.data();
+                auto* outR = namScratchB.data();
+
+                float* inPtrs[2] = { inL, inR };
+                float* outPtrs[2] = { outL, outR };
+                activeNam->process(inPtrs, outPtrs, numSamples);
+
+                std::memcpy(buffer.getWritePointer(0), namScratchA.data(), static_cast<size_t>(numSamples) * sizeof(float));
+                std::memcpy(buffer.getWritePointer(1), namScratchB.data(), static_cast<size_t>(numSamples) * sizeof(float));
+            }
+            else
+            {
+                for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+                {
+                    auto* in = buffer.getWritePointer(ch);
+                    auto* out = namScratchA.data();
+                    float* inPtrs[1] = { in };
+                    float* outPtrs[1] = { out };
+                    activeNam->process(inPtrs, outPtrs, numSamples);
+                    std::memcpy(buffer.getWritePointer(ch), namScratchA.data(), static_cast<size_t>(numSamples) * sizeof(float));
+                }
+            }
+        }
+    }
+#endif
 
     // Tone stack at base sample rate for predictable voicing across oversampling modes.
     for (int channel = 0; channel < totalNumOutputChannels; ++channel)
@@ -1331,17 +1433,17 @@ void MyAmpSimAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     }
 }
 
-bool MyAmpSimAudioProcessor::hasEditor() const
+bool VayuAudioProcessor::hasEditor() const
 {
     return true;
 }
 
-juce::AudioProcessorEditor* MyAmpSimAudioProcessor::createEditor()
+juce::AudioProcessorEditor* VayuAudioProcessor::createEditor()
 {
-    return new MyAmpSimAudioProcessorEditor(*this);
+    return new VayuAudioProcessorEditor(*this);
 }
 
-void MyAmpSimAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+void VayuAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
 
@@ -1351,6 +1453,7 @@ void MyAmpSimAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
         state.setProperty("cabIrPathA", currentIRFileA.getFullPathName(), nullptr);
         state.setProperty("cabIrPathB", currentIRFileB.getFullPathName(), nullptr);
         state.setProperty("bgImagePath", backgroundImagePath, nullptr);
+        state.setProperty("namModelPath", namModelPath, nullptr);
     }
 
     state.setProperty("cc_drive", midiCCMap[0], nullptr);
@@ -1376,7 +1479,7 @@ void MyAmpSimAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     copyXmlToBinary(*xml, destData);
 }
 
-void MyAmpSimAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
+void VayuAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     auto xml = getXmlFromBinary(data, sizeInBytes);
 
@@ -1389,6 +1492,7 @@ void MyAmpSimAudioProcessor::setStateInformation(const void* data, int sizeInByt
     const auto irPathLegacy = loadedState.getProperty("cabIrPath").toString();
     const auto irPathA = loadedState.getProperty("cabIrPathA", irPathLegacy).toString();
     const auto irPathB = loadedState.getProperty("cabIrPathB").toString();
+    const auto namPath = loadedState.getProperty("namModelPath").toString();
     setBackgroundImagePath(loadedState.getProperty("bgImagePath").toString());
 
     midiCCMap[0] = static_cast<int>(loadedState.getProperty("cc_drive", -1));
@@ -1419,9 +1523,12 @@ void MyAmpSimAudioProcessor::setStateInformation(const void* data, int sizeInByt
         loadCabinetIRSlot(1, juce::File(irPathB));
     else
         clearCabinetIRSlot(1);
+
+    if (namPath.isNotEmpty())
+        loadNamModel(namPath);
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new MyAmpSimAudioProcessor();
+    return new VayuAudioProcessor();
 }

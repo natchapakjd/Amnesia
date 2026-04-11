@@ -2,11 +2,22 @@
 
 #include <JuceHeader.h>
 
-class MyAmpSimAudioProcessor : public juce::AudioProcessor
+#if __has_include("NAM/get_dsp.h")
+#include "NAM/get_dsp.h"
+#define VAYU_HAS_NAM 1
+#elif __has_include("nam/nam.hpp")
+#include "nam/nam.hpp"
+#define VAYU_HAS_NAM 0
+#else
+#define VAYU_HAS_NAM 0
+namespace nam { class DSP; }
+#endif
+
+class VayuAudioProcessor : public juce::AudioProcessor
 {
 public:
-    MyAmpSimAudioProcessor();
-    ~MyAmpSimAudioProcessor() override;
+    VayuAudioProcessor();
+    ~VayuAudioProcessor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -68,6 +79,9 @@ public:
 
     static std::vector<FactoryPreset> getFactoryPresets();
     void loadFactoryPreset(int index);
+    void loadNamModel(const juce::String& path);
+    void clearNamModel();
+    juce::String getNamModelPath() const;
 
     // Spectrum FIFO — accessed from editor timer thread
     static constexpr int kSpecFifoSize = 512;
@@ -147,4 +161,10 @@ private:
     std::array<float, kSpecFifoSize> spectrumFifo {};
     std::atomic<int> specFifoWriteCount { 0 };
     int specFifoFill = 0;
+
+    // NAM engine shared with audio thread via atomic shared_ptr ops.
+    std::shared_ptr<nam::DSP> namEngine;
+    std::vector<float> namScratchA;
+    std::vector<float> namScratchB;
+    juce::String namModelPath;
 };

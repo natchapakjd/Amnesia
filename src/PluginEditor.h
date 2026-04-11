@@ -3,12 +3,12 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-class MyAmpSimAudioProcessorEditor : public juce::AudioProcessorEditor,
+class VayuAudioProcessorEditor : public juce::AudioProcessorEditor,
                                     private juce::Timer
 {
 public:
-    explicit MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcessor&);
-    ~MyAmpSimAudioProcessorEditor() override;
+    explicit VayuAudioProcessorEditor(VayuAudioProcessor&);
+    ~VayuAudioProcessorEditor() override;
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -31,7 +31,7 @@ private:
     };
 
     enum class UiTab { amp = 0, fx, tools };
-    enum class UiScale { small = 0, medium, large };
+    enum class UiScale { small = 0, medium, large, xlarge };
     void updateTabVisibility();
     void switchToTab(UiTab tab);
     void applyEditorSizePreset(UiScale preset);
@@ -40,7 +40,7 @@ private:
     class SpectrumAnalyzer : public juce::Component, public juce::Timer
     {
     public:
-        explicit SpectrumAnalyzer(MyAmpSimAudioProcessor& p)
+        explicit SpectrumAnalyzer(VayuAudioProcessor& p)
             : processor(p), fft(fftOrder)
         {
             startTimerHz(30);
@@ -103,7 +103,7 @@ private:
         }
 
     private:
-        MyAmpSimAudioProcessor& processor;
+        VayuAudioProcessor& processor;
         static constexpr int fftOrder = 9;
         static constexpr int fftSize  = 1 << fftOrder;   // 512
         juce::dsp::FFT fft;
@@ -129,10 +129,11 @@ private:
     void recallSnapshotAorB();
     void loadBackgroundImageFromFile(const juce::File& file);
     void chooseBackgroundImage();
+    void chooseNamModel();
     void clearBackgroundImage();
     void drawMeter(juce::Graphics& g, juce::Rectangle<int> bounds, float linearLevel, const juce::String& label) const;
 
-    MyAmpSimAudioProcessor& audioProcessor;
+    VayuAudioProcessor& audioProcessor;
     juce::TextButton ampTabButton { "Amp" };
     juce::TextButton fxTabButton { "FX" };
     juce::TextButton toolsTabButton { "Tools" };
@@ -151,6 +152,8 @@ private:
     juce::TextButton captureBButton { "Capture B" };
     juce::TextButton loadBackgroundButton { "Load Background" };
     juce::TextButton clearBackgroundButton { "Clear Background" };
+    juce::TextButton loadNamButton  { "Load NAM"  };
+    juce::TextButton clearNamButton  { "Clear NAM" };
     juce::ToggleButton compareABToggle { "Compare B" };
     juce::ToggleButton tunerToggle { "Show Tuner" };
     juce::ToggleButton irPhaseToggle { "IR Phase" };
@@ -174,6 +177,7 @@ private:
     juce::Label tunerDetailLabel;
     juce::Label midiMapStatusLabel;
     juce::Label backgroundStatusLabel;
+    juce::Label namStatusLabel;
     juce::Rectangle<int> inputMeterBounds;
     juce::Rectangle<int> outputMeterBounds;
 
@@ -225,6 +229,7 @@ private:
     std::unique_ptr<juce::FileChooser> irChooser;
     std::unique_ptr<juce::FileChooser> presetChooser;
     std::unique_ptr<juce::FileChooser> backgroundChooser;
+    std::unique_ptr<juce::FileChooser> namChooser;
     juce::MemoryBlock snapshotA;
     juce::MemoryBlock snapshotB;
     juce::Image backgroundImage;
@@ -267,7 +272,7 @@ private:
 
     struct PresetListModel : public juce::ListBoxModel
     {
-        std::vector<MyAmpSimAudioProcessor::FactoryPreset> presets;
+        std::vector<VayuAudioProcessor::FactoryPreset> presets;
         int getNumRows() override { return static_cast<int>(presets.size()); }
         void paintListBoxItem(int row, juce::Graphics& g, int w, int h, bool selected) override
         {

@@ -6,7 +6,7 @@
  #include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
 #endif
 
-void MyAmpSimAudioProcessorEditor::AmpLookAndFeel::drawRotarySlider(juce::Graphics& g,
+void VayuAudioProcessorEditor::AmpLookAndFeel::drawRotarySlider(juce::Graphics& g,
                                                                      int x,
                                                                      int y,
                                                                      int width,
@@ -16,31 +16,66 @@ void MyAmpSimAudioProcessorEditor::AmpLookAndFeel::drawRotarySlider(juce::Graphi
                                                                      float rotaryEndAngle,
                                                                      juce::Slider&)
 {
-    const auto bounds = juce::Rectangle<float>(static_cast<float>(x), static_cast<float>(y), static_cast<float>(width), static_cast<float>(height)).reduced(8.0f);
+    const auto bounds = juce::Rectangle<float>(static_cast<float>(x), static_cast<float>(y), static_cast<float>(width), static_cast<float>(height)).reduced(4.0f);
     const auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.5f;
     const auto centre = bounds.getCentre();
     const auto angle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
 
-    juce::ColourGradient ring(juce::Colour::fromRGB(90, 90, 95), centre.x, bounds.getY(), juce::Colour::fromRGB(30, 30, 32), centre.x, bounds.getBottom(), false);
-    g.setGradientFill(ring);
+    // ═══ OUTER RING SHADOW ═══
+    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    g.fillEllipse(bounds.translated(0.0f, 2.5f));
+
+    // ═══ MODERN METALLIC GRADIENT RING ═══
+    juce::ColourGradient ringGradient(
+        juce::Colour::fromRGB(85, 88, 92),     // light grey top
+        centre.x, bounds.getY(),
+        juce::Colour::fromRGB(28, 28, 32),    // dark bottom
+        centre.x, bounds.getBottom(),
+        false
+    );
+    g.setGradientFill(ringGradient);
     g.fillEllipse(bounds);
 
-    g.setColour(juce::Colour::fromRGB(18, 18, 20));
-    g.fillEllipse(bounds.reduced(radius * 0.16f));
+    // ═══ INNER KNOB DARK BASE ═══
+    auto innerBounds = bounds.reduced(radius * 0.15f);
+    juce::ColourGradient innerGradient(
+        juce::Colour::fromRGB(48, 50, 55),     // lighter centre
+        centre.x, innerBounds.getY(),
+        juce::Colour::fromRGB(15, 16, 20),    // deep black edge
+        centre.x, innerBounds.getBottom(),
+        false
+    );
+    g.setGradientFill(innerGradient);
+    g.fillEllipse(innerBounds);
 
-    g.setColour(juce::Colour::fromRGB(165, 168, 175));
-    g.drawEllipse(bounds.reduced(radius * 0.08f), 1.8f);
+    // ═══ INNER HIGHLIGHT (subtle glow) ═══
+    g.setColour(juce::Colour::fromRGB(120, 125, 135).withAlpha(0.4f));
+    g.drawEllipse(innerBounds.reduced(radius * 0.25f), 0.8f);
 
+    // ═══ OUTER RING BORDER ═══
+    g.setColour(juce::Colour::fromRGB(180, 190, 210).withAlpha(0.6f));
+    g.drawEllipse(bounds.reduced(radius * 0.05f), 1.5f);
+
+    // ═══ NEON INDICATOR - MODERNIZED ═══
     juce::Path notch;
-    notch.addRoundedRectangle(-1.8f, -radius * 0.72f, 3.6f, radius * 0.34f, 1.5f);
-    g.setColour(juce::Colours::orange.withAlpha(0.95f));
+    notch.addRoundedRectangle(-2.2f, -radius * 0.68f, 4.4f, radius * 0.36f, 2.0f);
+
+    // Neon cyan/electric glow
+    g.setColour(juce::Colour::fromRGB(0, 255, 200).withAlpha(0.9f));
     g.fillPath(notch, juce::AffineTransform::rotation(angle).translated(centre.x, centre.y));
 
-    g.setColour(juce::Colours::black.withAlpha(0.3f));
-    g.drawEllipse(bounds.translated(1.5f, 2.0f), 1.0f);
+    // Inner highlight on notch
+    juce::Path notchInner;
+    notchInner.addRoundedRectangle(-1.8f, -radius * 0.65f, 3.6f, radius * 0.28f, 1.5f);
+    g.setColour(juce::Colour::fromRGB(100, 255, 240).withAlpha(0.8f));
+    g.fillPath(notchInner, juce::AffineTransform::rotation(angle).translated(centre.x, centre.y));
+
+    // ═══ CENTER DOT ═══
+    g.setColour(juce::Colour::fromRGB(220, 225, 235).withAlpha(0.7f));
+    g.fillEllipse(juce::Rectangle<float>(centre.x - 1.5f, centre.y - 1.5f, 3.0f, 3.0f));
 }
 
-MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcessor& processor)
+VayuAudioProcessorEditor::VayuAudioProcessorEditor(VayuAudioProcessor& processor)
     : AudioProcessorEditor(&processor),
       audioProcessor(processor),
       driveAttachment(audioProcessor.apvts, "drive", driveSlider),
@@ -100,6 +135,7 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     uiSizeCombo.addItem("Small", 1);
     uiSizeCombo.addItem("Medium", 2);
     uiSizeCombo.addItem("Large", 3);
+    uiSizeCombo.addItem("XLarge", 4);
     uiSizeCombo.setSelectedId(2);
     uiSizeCombo.onChange = [this]
     {
@@ -108,6 +144,8 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
             applyEditorSizePreset(UiScale::small);
         else if (selected == 3)
             applyEditorSizePreset(UiScale::large);
+        else if (selected == 4)
+            applyEditorSizePreset(UiScale::xlarge);
         else
             applyEditorSizePreset(UiScale::medium);
     };
@@ -173,6 +211,14 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
 
     addAndMakeVisible(clearBackgroundButton);
     clearBackgroundButton.onClick = [this] { clearBackgroundImage(); };
+
+    addAndMakeVisible(loadNamButton);
+    loadNamButton.onClick = [this] { chooseNamModel(); };
+    addAndMakeVisible(clearNamButton);
+    clearNamButton.onClick = [this] {
+        audioProcessor.clearNamModel();
+        refreshToolsStatus();
+    };
 
     addAndMakeVisible(tunerToggle);
     tunerToggle.setToggleState(false, juce::dontSendNotification);
@@ -243,6 +289,10 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     backgroundStatusLabel.setJustificationType(juce::Justification::centredLeft);
     backgroundStatusLabel.setColour(juce::Label::textColourId, juce::Colours::lightgrey);
     addAndMakeVisible(backgroundStatusLabel);
+
+    namStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    namStatusLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+    addAndMakeVisible(namStatusLabel);
 
     irStatusLabel.setJustificationType(juce::Justification::centredLeft);
     irStatusLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
@@ -320,7 +370,7 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     addAndMakeVisible(limiterClipLabel);
 
     // Preset browser
-    presetListModel.presets = MyAmpSimAudioProcessor::getFactoryPresets();
+    presetListModel.presets = VayuAudioProcessor::getFactoryPresets();
     presetListBox.setModel(&presetListModel);
     presetListBox.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff1a1a1a));
     presetListBox.setColour(juce::ListBox::outlineColourId, juce::Colour(0xff404040));
@@ -383,12 +433,12 @@ MyAmpSimAudioProcessorEditor::MyAmpSimAudioProcessorEditor(MyAmpSimAudioProcesso
     applyEditorSizePreset(UiScale::medium);
 }
 
-MyAmpSimAudioProcessorEditor::~MyAmpSimAudioProcessorEditor()
+VayuAudioProcessorEditor::~VayuAudioProcessorEditor()
 {
     setLookAndFeel(nullptr);
 }
 
-void MyAmpSimAudioProcessorEditor::paint(juce::Graphics& g)
+void VayuAudioProcessorEditor::paint(juce::Graphics& g)
 {
     auto full = getLocalBounds();
 
@@ -409,7 +459,7 @@ void MyAmpSimAudioProcessorEditor::paint(juce::Graphics& g)
     g.setFont(g.getCurrentFont().withHeight(24.0f).boldened());
 
     auto titleArea = full.removeFromTop(50);
-    g.drawFittedText("MyAmpSim", titleArea, juce::Justification::centred, 1);
+    g.drawFittedText("Vayu", titleArea, juce::Justification::centred, 1);
 
     drawMeter(g, inputMeterBounds, audioProcessor.getInputMeterLevel(), "IN");
     drawMeter(g, outputMeterBounds, audioProcessor.getOutputMeterLevel(), "OUT");
@@ -448,7 +498,7 @@ void MyAmpSimAudioProcessorEditor::paint(juce::Graphics& g)
     }
 }
 
-void MyAmpSimAudioProcessorEditor::resized()
+void VayuAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds().reduced(12);
 
@@ -601,9 +651,13 @@ void MyAmpSimAudioProcessorEditor::resized()
 
     toolsArea.removeFromTop(6);
     auto row3 = toolsArea.removeFromTop(30);
-    loadBackgroundButton.setBounds(row3.removeFromLeft(148));
+    loadBackgroundButton.setBounds(row3.removeFromLeft(130));
     row3.removeFromLeft(8);
-    clearBackgroundButton.setBounds(row3.removeFromLeft(138));
+    clearBackgroundButton.setBounds(row3.removeFromLeft(130));
+    row3.removeFromLeft(8);
+    loadNamButton.setBounds(row3.removeFromLeft(110));
+    row3.removeFromLeft(8);
+    clearNamButton.setBounds(row3.removeFromLeft(110));
 
     toolsArea.removeFromTop(8);
     auto ioRow = toolsArea.removeFromTop(26);
@@ -632,14 +686,16 @@ void MyAmpSimAudioProcessorEditor::resized()
     midiMapStatusLabel.setBounds(toolsArea.removeFromTop(22));
     toolsArea.removeFromTop(4);
     backgroundStatusLabel.setBounds(toolsArea.removeFromTop(22));
+    toolsArea.removeFromTop(4);
+    namStatusLabel.setBounds(toolsArea.removeFromTop(22));
 }
 
-void MyAmpSimAudioProcessorEditor::chooseCabinetIR()
+void VayuAudioProcessorEditor::chooseCabinetIR()
 {
     chooseCabinetIRSlot(0);
 }
 
-void MyAmpSimAudioProcessorEditor::chooseCabinetIRSlot(int slotIndex)
+void VayuAudioProcessorEditor::chooseCabinetIRSlot(int slotIndex)
 {
     irChooser = std::make_unique<juce::FileChooser>(
         slotIndex == 0 ? "Choose cabinet IR for Slot A" : "Choose cabinet IR for Slot B",
@@ -660,14 +716,14 @@ void MyAmpSimAudioProcessorEditor::chooseCabinetIRSlot(int slotIndex)
     });
 }
 
-void MyAmpSimAudioProcessorEditor::refreshIrStatus()
+void VayuAudioProcessorEditor::refreshIrStatus()
 {
     irStatusLabel.setText("Cab Section", juce::dontSendNotification);
     irStatusALabel.setText("A: " + audioProcessor.getCurrentIRNameForSlot(0), juce::dontSendNotification);
     irStatusBLabel.setText("B: " + audioProcessor.getCurrentIRNameForSlot(1), juce::dontSendNotification);
 }
 
-void MyAmpSimAudioProcessorEditor::refreshTunerStatus()
+void VayuAudioProcessorEditor::refreshTunerStatus()
 {
     const auto note = audioProcessor.getTunerNoteName();
     const auto frequency = audioProcessor.getTunerFrequencyHz();
@@ -684,7 +740,7 @@ void MyAmpSimAudioProcessorEditor::refreshTunerStatus()
     tunerDetailLabel.setText(juce::String(frequency, 2) + " Hz | " + juce::String(cents, 1) + " cents", juce::dontSendNotification);
 }
 
-void MyAmpSimAudioProcessorEditor::refreshToolsStatus()
+void VayuAudioProcessorEditor::refreshToolsStatus()
 {
     midiMapStatusLabel.setText(audioProcessor.getMidiMappingDescription(), juce::dontSendNotification);
     undoButton.setEnabled(audioProcessor.canUndo());
@@ -694,9 +750,15 @@ void MyAmpSimAudioProcessorEditor::refreshToolsStatus()
         backgroundStatusLabel.setText("Background: " + juce::File(audioProcessor.getBackgroundImagePath()).getFileName(), juce::dontSendNotification);
     else
         backgroundStatusLabel.setText("Background: Default", juce::dontSendNotification);
+
+    const auto namPath = audioProcessor.getNamModelPath();
+    if (namPath.isNotEmpty())
+        namStatusLabel.setText("NAM: " + juce::File(namPath).getFileName(), juce::dontSendNotification);
+    else
+        namStatusLabel.setText("NAM: Off", juce::dontSendNotification);
 }
 
-void MyAmpSimAudioProcessorEditor::loadBackgroundImageFromFile(const juce::File& file)
+void VayuAudioProcessorEditor::loadBackgroundImageFromFile(const juce::File& file)
 {
     if (!file.existsAsFile())
         return;
@@ -711,7 +773,7 @@ void MyAmpSimAudioProcessorEditor::loadBackgroundImageFromFile(const juce::File&
     repaint();
 }
 
-void MyAmpSimAudioProcessorEditor::chooseBackgroundImage()
+void VayuAudioProcessorEditor::chooseBackgroundImage()
 {
     backgroundChooser = std::make_unique<juce::FileChooser>(
         "Choose background image",
@@ -727,7 +789,23 @@ void MyAmpSimAudioProcessorEditor::chooseBackgroundImage()
     });
 }
 
-void MyAmpSimAudioProcessorEditor::clearBackgroundImage()
+void VayuAudioProcessorEditor::chooseNamModel()
+{
+    namChooser = std::make_unique<juce::FileChooser>("Choose NAM model", juce::File(), "*.nam");
+
+    const auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+    namChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& chooser)
+    {
+        const auto file = chooser.getResult();
+        if (!file.existsAsFile())
+            return;
+
+        audioProcessor.loadNamModel(file.getFullPathName());
+        refreshToolsStatus();
+    });
+}
+
+void VayuAudioProcessorEditor::clearBackgroundImage()
 {
     backgroundImage = {};
     audioProcessor.setBackgroundImagePath({});
@@ -735,7 +813,7 @@ void MyAmpSimAudioProcessorEditor::clearBackgroundImage()
     repaint();
 }
 
-void MyAmpSimAudioProcessorEditor::savePresetToFile()
+void VayuAudioProcessorEditor::savePresetToFile()
 {
     auto nameDialog = std::make_unique<juce::AlertWindow>("Save Preset",
                                                            "Enter preset name",
@@ -780,7 +858,7 @@ void MyAmpSimAudioProcessorEditor::savePresetToFile()
     }), true);
 }
 
-void MyAmpSimAudioProcessorEditor::loadPresetFromFile()
+void VayuAudioProcessorEditor::loadPresetFromFile()
 {
     presetChooser = std::make_unique<juce::FileChooser>("Load preset", juce::File(), "*.amnesia");
     const auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
@@ -801,17 +879,17 @@ void MyAmpSimAudioProcessorEditor::loadPresetFromFile()
     });
 }
 
-void MyAmpSimAudioProcessorEditor::captureSnapshotA()
+void VayuAudioProcessorEditor::captureSnapshotA()
 {
     audioProcessor.getStateInformation(snapshotA);
 }
 
-void MyAmpSimAudioProcessorEditor::captureSnapshotB()
+void VayuAudioProcessorEditor::captureSnapshotB()
 {
     audioProcessor.getStateInformation(snapshotB);
 }
 
-void MyAmpSimAudioProcessorEditor::recallSnapshotAorB()
+void VayuAudioProcessorEditor::recallSnapshotAorB()
 {
     const auto& chosen = compareABToggle.getToggleState() ? snapshotB : snapshotA;
     if (chosen.getSize() == 0)
@@ -822,13 +900,13 @@ void MyAmpSimAudioProcessorEditor::recallSnapshotAorB()
     refreshToolsStatus();
 }
 
-void MyAmpSimAudioProcessorEditor::switchToTab(UiTab tab)
+void VayuAudioProcessorEditor::switchToTab(UiTab tab)
 {
     currentTab = tab;
     updateTabVisibility();
 }
 
-void MyAmpSimAudioProcessorEditor::applyEditorSizePreset(UiScale preset)
+void VayuAudioProcessorEditor::applyEditorSizePreset(UiScale preset)
 {
     currentScale = preset;
 
@@ -836,11 +914,13 @@ void MyAmpSimAudioProcessorEditor::applyEditorSizePreset(UiScale preset)
         setSize(680, 460);
     else if (preset == UiScale::large)
         setSize(920, 620);
+    else if (preset == UiScale::xlarge)
+        setSize(1100, 750);
     else
         setSize(760, 520);
 }
 
-void MyAmpSimAudioProcessorEditor::updateTabVisibility()
+void VayuAudioProcessorEditor::updateTabVisibility()
 {
     const bool showAmp = currentTab == UiTab::amp;
     const bool showFx = currentTab == UiTab::fx;
@@ -936,6 +1016,8 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     captureBButton.setVisible(showTools);
     loadBackgroundButton.setVisible(showTools);
     clearBackgroundButton.setVisible(showTools);
+    loadNamButton.setVisible(showTools);
+    clearNamButton.setVisible(showTools);
     compareABToggle.setVisible(showTools);
     undoButton.setVisible(showTools);
     redoButton.setVisible(showTools);
@@ -943,6 +1025,7 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     midiLearnButton.setVisible(showTools);
     midiMapStatusLabel.setVisible(showTools);
     backgroundStatusLabel.setVisible(showTools);
+    namStatusLabel.setVisible(showTools);
     inputTrimSlider.setVisible(showTools);
     inputTrimLabel.setVisible(showTools);
     limiterThreshSlider.setVisible(showTools);
@@ -958,7 +1041,7 @@ void MyAmpSimAudioProcessorEditor::updateTabVisibility()
     toolsTabButton.setColour(juce::TextButton::buttonColourId, showTools ? juce::Colours::darkorange : juce::Colours::darkgrey);
 }
 
-void MyAmpSimAudioProcessorEditor::timerCallback()
+void VayuAudioProcessorEditor::timerCallback()
 {
     refreshTunerStatus();
     refreshToolsStatus();
@@ -971,13 +1054,13 @@ void MyAmpSimAudioProcessorEditor::timerCallback()
     // Feed spectrum analyzer from processor FIFO
     if (spectrumAnalyzer->isVisible())
     {
-        static std::array<float, MyAmpSimAudioProcessor::kSpecFifoSize> tmpBuf;
+        static std::array<float, VayuAudioProcessor::kSpecFifoSize> tmpBuf;
         if (audioProcessor.consumeSpectrumBlock(tmpBuf.data()))
-            spectrumAnalyzer->pushSamples(tmpBuf.data(), MyAmpSimAudioProcessor::kSpecFifoSize);
+            spectrumAnalyzer->pushSamples(tmpBuf.data(), VayuAudioProcessor::kSpecFifoSize);
     }
 }
 
-void MyAmpSimAudioProcessorEditor::drawMeter(juce::Graphics& g,
+void VayuAudioProcessorEditor::drawMeter(juce::Graphics& g,
                                              juce::Rectangle<int> bounds,
                                              float linearLevel,
                                              const juce::String& label) const
@@ -1022,7 +1105,7 @@ void MyAmpSimAudioProcessorEditor::drawMeter(juce::Graphics& g,
     g.drawFittedText(label, frame.withY(frame.getBottom() - 18).withHeight(16), juce::Justification::centred, 1);
 }
 
-void MyAmpSimAudioProcessorEditor::openAudioSettings()
+void VayuAudioProcessorEditor::openAudioSettings()
 {
 #if JucePlugin_Build_Standalone
     if (audioProcessor.wrapperType != juce::AudioProcessor::wrapperType_Standalone)
