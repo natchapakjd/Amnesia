@@ -38,6 +38,10 @@ VayuAudioProcessor::VayuAudioProcessor()
     midiCCMap.fill(-1);
 }
 
+#if JUCE_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4996)
+#endif
 juce::AudioProcessorValueTreeState::ParameterLayout VayuAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
@@ -218,6 +222,74 @@ juce::AudioProcessorValueTreeState::ParameterLayout VayuAudioProcessor::createPa
         juce::StringArray { "Clean", "Crunch", "Lead" },
         1));
 
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "metalMode", 1 },
+        "Metal Mode",
+        false));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "tightLowCutHz", 1 },
+        "Tight Low Cut",
+        juce::NormalisableRange<float>(40.0f, 240.0f, 1.0f, 0.5f),
+        120.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value, 0) + " Hz"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "pitchShiftSemi", 1 },
+        "Pitch Shift",
+        juce::NormalisableRange<float>(-12.0f, 12.0f, 1.0f, 1.0f),
+        0.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return (value >= 0.0f ? "+" : "") + juce::String(value, 0) + " st"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" st").getFloatValue(); }));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "wahEnable", 1 },
+        "Wah Enable",
+        false));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "wahAuto", 1 },
+        "Wah Auto",
+        true));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "wahCenterHz", 1 },
+        "Wah Center",
+        juce::NormalisableRange<float>(250.0f, 2200.0f, 1.0f, 0.45f),
+        900.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value, 0) + " Hz"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "wahDepth", 1 },
+        "Wah Depth",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f),
+        0.6f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "killEnable", 1 },
+        "Kill Switch",
+        false));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "killRate", 1 },
+        "Kill Rate",
+        juce::StringArray { "1/4", "1/8", "1/16", "1/32" },
+        2));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "killDepth", 1 },
+        "Kill Depth",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f),
+        1.0f));
+
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "ampBassDb", 1 },
         "Amp Bass",
@@ -339,6 +411,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout VayuAudioProcessor::createPa
         juce::NormalisableRange<float>(-1.0f, 1.0f, 0.001f, 1.0f),
         0.0f));
 
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "cabAlignDelayMs", 1 },
+        "Cab Align Delay",
+        juce::NormalisableRange<float>(-2.0f, 2.0f, 0.01f, 1.0f),
+        0.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value, 2) + " ms"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" ms").getFloatValue(); }));
+
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID { "oversamplingMode", 1 },
         "Oversampling",
@@ -375,8 +457,31 @@ juce::AudioProcessorValueTreeState::ParameterLayout VayuAudioProcessor::createPa
         [](float value, int) { return juce::String(value, 1) + " ms"; },
         [](const juce::String& text) { return text.trimCharactersAtEnd(" ms").getFloatValue(); }));
 
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "namBypass", 1 },
+        "NAM Bypass",
+        false));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "namAutoMatch", 1 },
+        "NAM Auto Match",
+        true));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "namBlend", 1 },
+        "NAM Blend",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f),
+        1.0f,
+        juce::String(),
+        juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; },
+        [](const juce::String& text) { return text.trimCharactersAtEnd(" %").getFloatValue() / 100.0f; }));
+
     return layout;
 }
+#if JUCE_MSVC
+#pragma warning(pop)
+#endif
 
 VayuAudioProcessor::~VayuAudioProcessor() = default;
 
@@ -512,6 +617,155 @@ juce::String VayuAudioProcessor::getCurrentIRNameForSlot(int slotIndex) const
     return "Slot A (Default)";
 }
 
+bool VayuAudioProcessor::canAutoAlignCab() const
+{
+    const juce::ScopedLock lock(stateLock);
+    return currentIRFileA.existsAsFile() && currentIRFileB.existsAsFile();
+}
+
+float VayuAudioProcessor::getLastCabAlignCorrelation() const
+{
+    return cabAlignCorrelation.load();
+}
+
+float VayuAudioProcessor::getCabAlignDelayMs() const
+{
+    if (auto* value = apvts.getRawParameterValue("cabAlignDelayMs"))
+        return value->load();
+
+    return 0.0f;
+}
+
+bool VayuAudioProcessor::autoAlignCabPolarity()
+{
+    juce::File irA;
+    juce::File irB;
+    {
+        const juce::ScopedLock lock(stateLock);
+        irA = currentIRFileA;
+        irB = currentIRFileB;
+    }
+
+    if (!irA.existsAsFile() || !irB.existsAsFile())
+        return false;
+
+    auto readMonoIR = [](const juce::File& file, std::vector<float>& out, double& sampleRateOut) -> bool
+    {
+        juce::AudioFormatManager formatManager;
+        formatManager.registerBasicFormats();
+
+        auto input = file.createInputStream();
+        if (input == nullptr)
+            return false;
+
+        std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(std::move(input)));
+        if (reader == nullptr || reader->lengthInSamples <= 0)
+            return false;
+
+        sampleRateOut = reader->sampleRate;
+
+        const int maxSamples = 8192;
+        const int numSamples = static_cast<int>(juce::jlimit<juce::int64>(0, maxSamples, reader->lengthInSamples));
+        if (numSamples <= 0)
+            return false;
+
+        const int channelsToRead = static_cast<int>(juce::jlimit<juce::uint32>(1u, 2u, reader->numChannels));
+        juce::AudioBuffer<float> temp(channelsToRead, numSamples);
+        if (!reader->read(&temp, 0, numSamples, 0, true, true))
+            return false;
+
+        out.assign(static_cast<size_t>(numSamples), 0.0f);
+        for (int i = 0; i < numSamples; ++i)
+        {
+            float sum = 0.0f;
+            for (int ch = 0; ch < channelsToRead; ++ch)
+                sum += temp.getSample(ch, i);
+
+            out[static_cast<size_t>(i)] = sum / static_cast<float>(channelsToRead);
+        }
+
+        return true;
+    };
+
+    std::vector<float> monoA;
+    std::vector<float> monoB;
+    double sampleRateA = 44100.0;
+    double sampleRateB = 44100.0;
+    if (!readMonoIR(irA, monoA, sampleRateA) || !readMonoIR(irB, monoB, sampleRateB))
+        return false;
+
+    const int n = juce::jmin(static_cast<int>(monoA.size()), static_cast<int>(monoB.size()));
+    if (n < 64)
+        return false;
+
+    double sumA = 0.0;
+    double sumB = 0.0;
+    for (int i = 0; i < n; ++i)
+    {
+        sumA += monoA[static_cast<size_t>(i)];
+        sumB += monoB[static_cast<size_t>(i)];
+    }
+    const double meanA = sumA / static_cast<double>(n);
+    const double meanB = sumB / static_cast<double>(n);
+
+    const int maxLag = juce::jmin(256, n / 3);
+    double bestCorr = 0.0;
+    int bestLag = 0;
+
+    for (int lag = -maxLag; lag <= maxLag; ++lag)
+    {
+        double dot = 0.0;
+        double energyA = 0.0;
+        double energyB = 0.0;
+
+        for (int i = 0; i < n; ++i)
+        {
+            const int j = i + lag;
+            if (j < 0 || j >= n)
+                continue;
+
+            const double a = static_cast<double>(monoA[static_cast<size_t>(i)]) - meanA;
+            const double b = static_cast<double>(monoB[static_cast<size_t>(j)]) - meanB;
+            dot += a * b;
+            energyA += a * a;
+            energyB += b * b;
+        }
+
+        const double denom = std::sqrt(juce::jmax(1.0e-18, energyA * energyB));
+        const double corr = dot / denom;
+        if (std::abs(corr) > std::abs(bestCorr))
+        {
+            bestCorr = corr;
+            bestLag = lag;
+        }
+    }
+
+    const float correlation = static_cast<float>(bestCorr);
+    cabAlignCorrelation.store(correlation);
+
+    const bool shouldFlipB = correlation < 0.0f;
+    if (auto* param = apvts.getParameter("cabFlipB"))
+    {
+        param->beginChangeGesture();
+        param->setValueNotifyingHost(shouldFlipB ? 1.0f : 0.0f);
+        param->endChangeGesture();
+    }
+
+    const double sr = sampleRateB > 1000.0 ? sampleRateB : 44100.0;
+    const float delayMs = juce::jlimit(-2.0f, 2.0f, static_cast<float>((-bestLag * 1000.0) / sr));
+    cabAlignDelayMsTelemetry.store(delayMs);
+    if (auto* delayParam = apvts.getParameter("cabAlignDelayMs"))
+    {
+        const auto* ranged = dynamic_cast<juce::AudioParameterFloat*>(delayParam);
+        delayParam->beginChangeGesture();
+        if (ranged != nullptr)
+            delayParam->setValueNotifyingHost(ranged->convertTo0to1(delayMs));
+        delayParam->endChangeGesture();
+    }
+
+    return true;
+}
+
 void VayuAudioProcessor::setBackgroundImagePath(const juce::String& path)
 {
     const juce::ScopedLock lock(stateLock);
@@ -589,7 +843,9 @@ juce::String VayuAudioProcessor::getMidiMappingDescription() const
         "Drive", "Output", "Gate", "Boost", "Delay Mix", "Reverb Mix",
         "Cab Blend", "Cab Pan", "Cab A Level", "Cab B Level",
         "Delay Feedback", "Delay Time", "Reverb Room", "Reverb Damping",
-        "Bass", "Mid", "Treble", "Presence"
+        "Bass", "Mid", "Treble", "Presence",
+        "Pitch", "Tight Cut", "Wah Freq", "Wah Depth",
+        "Kill Depth", "NAM Blend", "Input Trim"
     };
 
     juce::StringArray items;
@@ -724,6 +980,9 @@ void VayuAudioProcessor::loadNamModel(const juce::String& path)
 void VayuAudioProcessor::clearNamModel()
 {
     std::atomic_store_explicit(&namEngine, std::shared_ptr<nam::DSP>{}, std::memory_order_release);
+    namMatchInRms = 0.0f;
+    namMatchOutRms = 0.0f;
+    namMatchGainDb.store(0.0f);
     const juce::ScopedLock lock(stateLock);
     namModelPath.clear();
 }
@@ -734,6 +993,11 @@ juce::String VayuAudioProcessor::getNamModelPath() const
     return namModelPath;
 }
 
+float VayuAudioProcessor::getNamMatchGainDb() const
+{
+    return namMatchGainDb.load();
+}
+
 void VayuAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMessages)
 {
     static constexpr const char* parameterIds[] =
@@ -741,7 +1005,9 @@ void VayuAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMessage
         "drive", "outputVolume", "gateThreshold", "boostDb", "delayMix", "reverbMix",
         "cabBlend", "cabPan", "cabLevelA", "cabLevelB",
         "delayFeedback", "delayTimeMs", "reverbRoomSize", "reverbDamping",
-        "ampBassDb", "ampMidDb", "ampTrebleDb", "ampPresenceDb"
+        "ampBassDb", "ampMidDb", "ampTrebleDb", "ampPresenceDb",
+        "pitchShiftSemi", "tightLowCutHz", "wahCenterHz", "wahDepth",
+        "killDepth", "namBlend", "inputTrimDb"
     };
 
     for (const auto metadata : midiMessages)
@@ -822,6 +1088,7 @@ void VayuAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     cabBufferA.setSize(processingChannels, samplesPerBlock, false, false, true);
     cabBufferB.setSize(processingChannels, samplesPerBlock, false, false, true);
+    pitchBuffer.setSize(processingChannels, samplesPerBlock, false, false, true);
 
     delayLine.reset();
     delayLine.prepare(processSpec);
@@ -855,6 +1122,11 @@ void VayuAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 #if VAYU_HAS_NAM
     namScratchA.assign(static_cast<size_t>(juce::jmax(1, samplesPerBlock)), 0.0f);
     namScratchB.assign(static_cast<size_t>(juce::jmax(1, samplesPerBlock)), 0.0f);
+    namDryA.assign(static_cast<size_t>(juce::jmax(1, samplesPerBlock)), 0.0f);
+    namDryB.assign(static_cast<size_t>(juce::jmax(1, samplesPerBlock)), 0.0f);
+    namMatchInRms = 0.0f;
+    namMatchOutRms = 0.0f;
+    namMatchGainDb.store(0.0f);
 
     if (auto activeNam = std::atomic_load_explicit(&namEngine, std::memory_order_acquire))
         activeNam->Reset(sampleRate, samplesPerBlock);
@@ -866,6 +1138,8 @@ void VayuAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     limiterEnvelope = 0.0f;
     gateEnvelope = 0.0f;
     gateGain = 1.0f;
+    killLfoPhase = 0.0f;
+    wahLfoPhase = 0.0f;
 
     isPrepared = true;
 
@@ -896,10 +1170,18 @@ void VayuAudioProcessor::releaseResources()
     outputMeterLevel.store(0.0f);
     gateEnvelope = 0.0f;
     gateGain = 1.0f;
+    killLfoPhase = 0.0f;
+    wahLfoPhase = 0.0f;
     oversampling2x.reset();
     oversampling4x.reset();
+    pitchBuffer.setSize(0, 0);
     namScratchA.clear();
     namScratchB.clear();
+    namDryA.clear();
+    namDryB.clear();
+    namMatchInRms = 0.0f;
+    namMatchOutRms = 0.0f;
+    namMatchGainDb.store(0.0f);
 }
 
 void VayuAudioProcessor::updateTuner(const juce::AudioBuffer<float>& buffer)
@@ -1051,6 +1333,16 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     const float limiterThreshDb = apvts.getRawParameterValue("limiterThreshDb")->load();
     const bool limiterEnabled = apvts.getRawParameterValue("limiterEnabled")->load() > 0.5f;
     const int ampType = static_cast<int>(apvts.getRawParameterValue("ampType")->load());
+    const bool metalMode = apvts.getRawParameterValue("metalMode")->load() > 0.5f;
+    const float tightLowCutHz = apvts.getRawParameterValue("tightLowCutHz")->load();
+    const float pitchShiftSemi = apvts.getRawParameterValue("pitchShiftSemi")->load();
+    const bool wahEnable = apvts.getRawParameterValue("wahEnable")->load() > 0.5f;
+    const bool wahAuto = apvts.getRawParameterValue("wahAuto")->load() > 0.5f;
+    const float wahCenterHz = apvts.getRawParameterValue("wahCenterHz")->load();
+    const float wahDepth = apvts.getRawParameterValue("wahDepth")->load();
+    const bool killEnable = apvts.getRawParameterValue("killEnable")->load() > 0.5f;
+    const int killRate = static_cast<int>(apvts.getRawParameterValue("killRate")->load());
+    const float killDepth = apvts.getRawParameterValue("killDepth")->load();
     const float ampBassDb = apvts.getRawParameterValue("ampBassDb")->load();
     const float ampMidDb = apvts.getRawParameterValue("ampMidDb")->load();
     const float ampTrebleDb = apvts.getRawParameterValue("ampTrebleDb")->load();
@@ -1065,7 +1357,13 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     const bool cabFlipA = apvts.getRawParameterValue("cabFlipA")->load() > 0.5f;
     const bool cabFlipB = apvts.getRawParameterValue("cabFlipB")->load() > 0.5f;
     const float cabPan = apvts.getRawParameterValue("cabPan")->load();
+    const float cabAlignDelayMs = apvts.getRawParameterValue("cabAlignDelayMs")->load();
     const int oversamplingMode = static_cast<int>(apvts.getRawParameterValue("oversamplingMode")->load());
+#if VAYU_HAS_NAM
+    const bool namBypass = apvts.getRawParameterValue("namBypass")->load() > 0.5f;
+    const bool namAutoMatch = apvts.getRawParameterValue("namAutoMatch")->load() > 0.5f;
+    const float namBlend = apvts.getRawParameterValue("namBlend")->load();
+#endif
 
     const float outputGain = juce::Decibels::decibelsToGain(outputDb);
     const float gateThresholdLinear = juce::Decibels::decibelsToGain(gateThresholdDb);
@@ -1077,6 +1375,7 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     const float cabBGain = juce::Decibels::decibelsToGain(cabLevelB);
     const float cabAPolarity = cabFlipA ? -1.0f : 1.0f;
     const float cabBPolarity = cabFlipB ? -1.0f : 1.0f;
+    const float cabAlignDelaySamples = cabAlignDelayMs * 0.001f * static_cast<float>(getSampleRate());
     const float delayFeedback  = apvts.getRawParameterValue("delayFeedback")->load();
     const float delayModRate   = apvts.getRawParameterValue("delayModRate")->load();
     const float delayModDepth  = apvts.getRawParameterValue("delayModDepth")->load();
@@ -1092,6 +1391,11 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
 
     if (ampType == 0)      { ampSaturation = 0.72f; ampPostEQ = 1.05f; }
     else if (ampType == 2) { ampSaturation = 1.38f; ampPostEQ = 0.92f; }
+    if (metalMode)
+    {
+        ampSaturation *= 1.16f;
+        ampPostEQ *= 0.96f;
+    }
 
     const auto bassCoeffs = juce::dsp::IIR::Coefficients<float>::makeLowShelf(getSampleRate(), 120.0, 0.707f, juce::Decibels::decibelsToGain(ampBassDb));
     const auto midCoeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), 750.0, 0.8f, juce::Decibels::decibelsToGain(ampMidDb));
@@ -1106,6 +1410,20 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     ampTrebleR.coefficients = trebleCoeffs;
     ampPresenceL.coefficients = presenceCoeffs;
     ampPresenceR.coefficients = presenceCoeffs;
+
+    const auto tightCoeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(
+        getSampleRate(),
+        metalMode ? tightLowCutHz : 30.0f);
+    tightFilterL.coefficients = tightCoeffs;
+    tightFilterR.coefficients = tightCoeffs;
+
+    const float autoSweep = 0.5f + 0.5f * std::sin(wahLfoPhase);
+    const float wahCenter = wahAuto
+        ? juce::jlimit(250.0f, 2200.0f, 350.0f + autoSweep * 1700.0f * juce::jlimit(0.0f, 1.0f, wahDepth))
+        : wahCenterHz;
+    const auto wahCoeffs = juce::dsp::IIR::Coefficients<float>::makeBandPass(getSampleRate(), wahCenter, 0.42f);
+    wahFilterL.coefficients = wahCoeffs;
+    wahFilterR.coefficients = wahCoeffs;
 
     irLowCutL.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), irLowCutHz);
     irLowCutR.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), irLowCutHz);
@@ -1163,7 +1481,14 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
 
                 const float gated = in * gateGain;
                 const float boosted = gated * boostGain;
-                const float amped = std::tanh(boosted * drive * ampSaturation) * ampPostEQ;
+                const float tightened = (channel == 0 ? tightFilterL.processSample(boosted)
+                                                      : tightFilterR.processSample(boosted));
+                float amped = std::tanh(tightened * drive * ampSaturation) * ampPostEQ;
+                if (metalMode)
+                {
+                    const float hard = juce::jlimit(-0.95f, 0.95f, tightened * drive * 0.88f);
+                    amped = amped * 0.62f + hard * 0.38f;
+                }
                 channelData[sample] = amped * outputGain;
             }
         }
@@ -1192,37 +1517,114 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
 
     // NAM stage (real-time safe): no allocation, no locks, stable shared_ptr snapshot per block.
 #if VAYU_HAS_NAM
-    if (auto activeNam = std::atomic_load_explicit(&namEngine, std::memory_order_acquire))
+    if (!namBypass)
     {
-        if (numSamples <= static_cast<int>(namScratchA.size()))
+        if (auto activeNam = std::atomic_load_explicit(&namEngine, std::memory_order_acquire))
         {
-            const int namIn = activeNam->NumInputChannels();
-            const int namOut = activeNam->NumOutputChannels();
-
-            if (namIn >= 2 && namOut >= 2 && totalNumOutputChannels > 1)
+            if (numSamples <= static_cast<int>(namScratchA.size()) && numSamples <= static_cast<int>(namDryA.size()))
             {
-                auto* inL = buffer.getWritePointer(0);
-                auto* inR = buffer.getWritePointer(1);
-                auto* outL = namScratchA.data();
-                auto* outR = namScratchB.data();
-
-                float* inPtrs[2] = { inL, inR };
-                float* outPtrs[2] = { outL, outR };
-                activeNam->process(inPtrs, outPtrs, numSamples);
-
-                std::memcpy(buffer.getWritePointer(0), namScratchA.data(), static_cast<size_t>(numSamples) * sizeof(float));
-                std::memcpy(buffer.getWritePointer(1), namScratchB.data(), static_cast<size_t>(numSamples) * sizeof(float));
-            }
-            else
-            {
-                for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+                auto measureStereoRms = [&buffer, numSamples, totalNumOutputChannels]()
                 {
-                    auto* in = buffer.getWritePointer(ch);
-                    auto* out = namScratchA.data();
-                    float* inPtrs[1] = { in };
-                    float* outPtrs[1] = { out };
+                    const int chCount = juce::jmin(2, totalNumOutputChannels);
+                    if (chCount <= 0 || numSamples <= 0)
+                        return 0.0f;
+
+                    double sumSquares = 0.0;
+                    int count = 0;
+                    for (int ch = 0; ch < chCount; ++ch)
+                    {
+                        const float* data = buffer.getReadPointer(ch);
+                        for (int i = 0; i < numSamples; ++i)
+                        {
+                            const float s = data[i];
+                            sumSquares += static_cast<double>(s * s);
+                        }
+                        count += numSamples;
+                    }
+
+                    if (count <= 0)
+                        return 0.0f;
+
+                    return static_cast<float>(std::sqrt(sumSquares / static_cast<double>(count)));
+                };
+
+                const bool applyNamMatch = namAutoMatch;
+                const float preNamRms = applyNamMatch ? measureStereoRms() : 0.0f;
+                const int namIn = activeNam->NumInputChannels();
+                const int namOut = activeNam->NumOutputChannels();
+
+                if (namIn >= 2 && namOut >= 2 && totalNumOutputChannels > 1)
+                {
+                    auto* inL = buffer.getWritePointer(0);
+                    auto* inR = buffer.getWritePointer(1);
+                    auto* outL = namScratchA.data();
+                    auto* outR = namScratchB.data();
+
+                    if (namBlend < 0.999f)
+                    {
+                        std::memcpy(namDryA.data(), inL, static_cast<size_t>(numSamples) * sizeof(float));
+                        std::memcpy(namDryB.data(), inR, static_cast<size_t>(numSamples) * sizeof(float));
+                    }
+
+                    float* inPtrs[2] = { inL, inR };
+                    float* outPtrs[2] = { outL, outR };
                     activeNam->process(inPtrs, outPtrs, numSamples);
-                    std::memcpy(buffer.getWritePointer(ch), namScratchA.data(), static_cast<size_t>(numSamples) * sizeof(float));
+
+                    if (namBlend < 0.999f)
+                    {
+                        const float dryMix = 1.0f - namBlend;
+                        for (int i = 0; i < numSamples; ++i)
+                        {
+                            buffer.setSample(0, i, namDryA[static_cast<size_t>(i)] * dryMix + namScratchA[static_cast<size_t>(i)] * namBlend);
+                            buffer.setSample(1, i, namDryB[static_cast<size_t>(i)] * dryMix + namScratchB[static_cast<size_t>(i)] * namBlend);
+                        }
+                    }
+                    else
+                    {
+                        std::memcpy(buffer.getWritePointer(0), namScratchA.data(), static_cast<size_t>(numSamples) * sizeof(float));
+                        std::memcpy(buffer.getWritePointer(1), namScratchB.data(), static_cast<size_t>(numSamples) * sizeof(float));
+                    }
+                }
+                else
+                {
+                    for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+                    {
+                        auto* in = buffer.getWritePointer(ch);
+                        auto* out = namScratchA.data();
+                        if (namBlend < 0.999f)
+                            std::memcpy(namDryA.data(), in, static_cast<size_t>(numSamples) * sizeof(float));
+
+                        float* inPtrs[1] = { in };
+                        float* outPtrs[1] = { out };
+                        activeNam->process(inPtrs, outPtrs, numSamples);
+
+                        if (namBlend < 0.999f)
+                        {
+                            const float dryMix = 1.0f - namBlend;
+                            for (int i = 0; i < numSamples; ++i)
+                                buffer.setSample(ch, i, namDryA[static_cast<size_t>(i)] * dryMix + namScratchA[static_cast<size_t>(i)] * namBlend);
+                        }
+                        else
+                        {
+                            std::memcpy(buffer.getWritePointer(ch), namScratchA.data(), static_cast<size_t>(numSamples) * sizeof(float));
+                        }
+                    }
+                }
+
+                if (applyNamMatch)
+                {
+                    const float postNamRms = measureStereoRms();
+                    constexpr float smooth = 0.96f;
+                    namMatchInRms = (smooth * namMatchInRms) + ((1.0f - smooth) * preNamRms);
+                    namMatchOutRms = (smooth * namMatchOutRms) + ((1.0f - smooth) * postNamRms);
+
+                    if (namMatchOutRms > 1.0e-6f && namMatchInRms > 1.0e-6f)
+                    {
+                        const float matchGain = juce::jlimit(0.5f, 2.0f, namMatchInRms / namMatchOutRms);
+                        for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+                            buffer.applyGain(ch, 0, numSamples, matchGain);
+                        namMatchGainDb.store(juce::Decibels::gainToDecibels(matchGain));
+                    }
                 }
             }
         }
@@ -1249,6 +1651,78 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
         }
     }
 
+    // Key shift (simple real-time resample transposer for quick down/up tune workflow).
+    if (std::abs(pitchShiftSemi) > 0.01f && numSamples > 4)
+    {
+        const float ratio = std::pow(2.0f, pitchShiftSemi / 12.0f);
+        pitchBuffer.makeCopyOf(buffer, true);
+        const float sourceLen = static_cast<float>(numSamples - 1);
+
+        for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+        {
+            const float* src = pitchBuffer.getReadPointer(channel);
+            float* dst = buffer.getWritePointer(channel);
+            for (int sample = 0; sample < numSamples; ++sample)
+            {
+                float srcPos = static_cast<float>(sample) * ratio;
+                while (srcPos > sourceLen)
+                    srcPos -= sourceLen;
+                const int i0 = static_cast<int>(srcPos);
+                const int i1 = juce::jmin(i0 + 1, numSamples - 1);
+                const float frac = srcPos - static_cast<float>(i0);
+                dst[sample] = src[i0] + (src[i1] - src[i0]) * frac;
+            }
+        }
+    }
+
+    if (wahEnable)
+    {
+        for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+        {
+            auto* data = buffer.getWritePointer(channel);
+            auto& wah = (channel == 0) ? wahFilterL : wahFilterR;
+            for (int sample = 0; sample < numSamples; ++sample)
+                data[sample] = wah.processSample(data[sample]);
+        }
+    }
+
+    if (killEnable)
+    {
+        constexpr float killDivisions[] = { 1.0f, 2.0f, 4.0f, 8.0f };
+        const int rateIndex = juce::jlimit(0, 3, killRate);
+        double bpm = 120.0;
+        if (auto* hostPlayHead = getPlayHead())
+        {
+            if (auto position = hostPlayHead->getPosition())
+            {
+                if (auto hostBpm = position->getBpm(); hostBpm.hasValue() && *hostBpm > 0.0)
+                    bpm = *hostBpm;
+            }
+        }
+
+        const float hz = static_cast<float>(bpm / 60.0) * killDivisions[rateIndex];
+        const float phaseInc = juce::MathConstants<float>::twoPi * hz / static_cast<float>(getSampleRate());
+        const float depth = juce::jlimit(0.0f, 1.0f, killDepth);
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            killLfoPhase += phaseInc;
+            if (killLfoPhase > juce::MathConstants<float>::twoPi)
+                killLfoPhase -= juce::MathConstants<float>::twoPi;
+
+            const float square = std::sin(killLfoPhase) > 0.0f ? 1.0f : 0.0f;
+            const float gate = (1.0f - depth) + square * depth;
+
+            for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+                buffer.setSample(channel, sample, buffer.getSample(channel, sample) * gate);
+        }
+    }
+
+    wahLfoPhase += juce::MathConstants<float>::twoPi * (0.3f + wahDepth * 2.5f)
+                   * static_cast<float>(numSamples) / static_cast<float>(getSampleRate());
+    if (wahLfoPhase > juce::MathConstants<float>::twoPi)
+        wahLfoPhase = std::fmod(wahLfoPhase, juce::MathConstants<float>::twoPi);
+
     // Copy processed input channels into any extra output channels.
     for (int channel = totalNumInputChannels; channel < totalNumOutputChannels; ++channel)
         buffer.copyFrom(channel, 0, buffer, channel % totalNumInputChannels, 0, numSamples);
@@ -1270,10 +1744,22 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
         const auto* a = cabBufferA.getReadPointer(channel);
         const auto* b = cabBufferB.getReadPointer(channel);
 
+        auto readShiftedB = [b, numSamples, cabAlignDelaySamples](int sampleIndex)
+        {
+            const float sourceIndex = static_cast<float>(sampleIndex) - cabAlignDelaySamples;
+            const int i0 = static_cast<int>(std::floor(sourceIndex));
+            const int i1 = i0 + 1;
+            const float frac = sourceIndex - static_cast<float>(i0);
+
+            const float s0 = (i0 >= 0 && i0 < numSamples) ? b[i0] : 0.0f;
+            const float s1 = (i1 >= 0 && i1 < numSamples) ? b[i1] : 0.0f;
+            return s0 + (s1 - s0) * frac;
+        };
+
         for (int sample = 0; sample < numSamples; ++sample)
         {
             const float slotA = a[sample] * cabAGain * cabAPolarity;
-            const float slotB = b[sample] * cabBGain * cabBPolarity;
+            const float slotB = readShiftedB(sample) * cabBGain * cabBPolarity;
             out[sample] = slotA * (1.0f - cabBlend) + slotB * cabBlend;
         }
     }
@@ -1474,6 +1960,13 @@ void VayuAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     state.setProperty("cc_mid", midiCCMap[15], nullptr);
     state.setProperty("cc_treble", midiCCMap[16], nullptr);
     state.setProperty("cc_presence", midiCCMap[17], nullptr);
+    state.setProperty("cc_pitch", midiCCMap[18], nullptr);
+    state.setProperty("cc_tight", midiCCMap[19], nullptr);
+    state.setProperty("cc_wahFreq", midiCCMap[20], nullptr);
+    state.setProperty("cc_wahDepth", midiCCMap[21], nullptr);
+    state.setProperty("cc_killDepth", midiCCMap[22], nullptr);
+    state.setProperty("cc_namBlend", midiCCMap[23], nullptr);
+    state.setProperty("cc_inputTrim", midiCCMap[24], nullptr);
 
     auto xml = state.createXml();
     copyXmlToBinary(*xml, destData);
@@ -1513,6 +2006,13 @@ void VayuAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
     midiCCMap[15] = static_cast<int>(loadedState.getProperty("cc_mid", -1));
     midiCCMap[16] = static_cast<int>(loadedState.getProperty("cc_treble", -1));
     midiCCMap[17] = static_cast<int>(loadedState.getProperty("cc_presence", -1));
+    midiCCMap[18] = static_cast<int>(loadedState.getProperty("cc_pitch", -1));
+    midiCCMap[19] = static_cast<int>(loadedState.getProperty("cc_tight", -1));
+    midiCCMap[20] = static_cast<int>(loadedState.getProperty("cc_wahFreq", -1));
+    midiCCMap[21] = static_cast<int>(loadedState.getProperty("cc_wahDepth", -1));
+    midiCCMap[22] = static_cast<int>(loadedState.getProperty("cc_killDepth", -1));
+    midiCCMap[23] = static_cast<int>(loadedState.getProperty("cc_namBlend", -1));
+    midiCCMap[24] = static_cast<int>(loadedState.getProperty("cc_inputTrim", -1));
 
     if (irPathA.isNotEmpty())
         loadCabinetIRSlot(0, juce::File(irPathA));

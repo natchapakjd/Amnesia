@@ -1,6 +1,12 @@
 #pragma once
 
+#if __has_include(<JuceHeader.h>)
 #include <JuceHeader.h>
+#elif __has_include("../build-local/Vayu_artefacts/JuceLibraryCode/JuceHeader.h")
+#include "../build-local/Vayu_artefacts/JuceLibraryCode/JuceHeader.h"
+#else
+#error Could not locate JuceHeader.h
+#endif
 
 #if __has_include("NAM/get_dsp.h")
 #include "NAM/get_dsp.h"
@@ -53,6 +59,10 @@ public:
     bool loadCabinetIRSlot(int slotIndex, const juce::File& irFile);
     void clearCabinetIRSlot(int slotIndex);
     juce::String getCurrentIRNameForSlot(int slotIndex) const;
+    bool autoAlignCabPolarity();
+    bool canAutoAlignCab() const;
+    float getLastCabAlignCorrelation() const;
+    float getCabAlignDelayMs() const;
     void setBackgroundImagePath(const juce::String& path);
     juce::String getBackgroundImagePath() const;
 
@@ -82,6 +92,7 @@ public:
     void loadNamModel(const juce::String& path);
     void clearNamModel();
     juce::String getNamModelPath() const;
+    float getNamMatchGainDb() const;
 
     // Spectrum FIFO — accessed from editor timer thread
     static constexpr int kSpecFifoSize = 512;
@@ -120,6 +131,10 @@ private:
     juce::dsp::IIR::Filter<float> ampTrebleR;
     juce::dsp::IIR::Filter<float> ampPresenceL;
     juce::dsp::IIR::Filter<float> ampPresenceR;
+    juce::dsp::IIR::Filter<float> tightFilterL;
+    juce::dsp::IIR::Filter<float> tightFilterR;
+    juce::dsp::IIR::Filter<float> wahFilterL;
+    juce::dsp::IIR::Filter<float> wahFilterR;
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine { 192000 };
     juce::dsp::Reverb reverb;
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampling2x;
@@ -146,14 +161,17 @@ private:
     float gateGain = 1.0f;
     bool gateIsOpen = true;
     float delayLfoPhase = 0.0f;
+    float killLfoPhase = 0.0f;
+    float wahLfoPhase = 0.0f;
     int processingChannels = 2;
 
     juce::UndoManager undoManager;
     int learningParamIndex = -1;
-    std::array<int, 18> midiCCMap;  // init in constructor
+    std::array<int, 25> midiCCMap;  // init in constructor
 
     juce::AudioBuffer<float> cabBufferA;
     juce::AudioBuffer<float> cabBufferB;
+    juce::AudioBuffer<float> pitchBuffer;
 
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> reverbPreDelay { 22050 };
     float limiterEnvelope = 0.0f;
@@ -166,5 +184,12 @@ private:
     std::shared_ptr<nam::DSP> namEngine;
     std::vector<float> namScratchA;
     std::vector<float> namScratchB;
+    std::vector<float> namDryA;
+    std::vector<float> namDryB;
     juce::String namModelPath;
+    float namMatchInRms = 0.0f;
+    float namMatchOutRms = 0.0f;
+    std::atomic<float> namMatchGainDb { 0.0f };
+    std::atomic<float> cabAlignCorrelation { 0.0f };
+    std::atomic<float> cabAlignDelayMsTelemetry { 0.0f };
 };

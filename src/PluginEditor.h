@@ -1,7 +1,14 @@
 #pragma once
 
+#if __has_include(<JuceHeader.h>)
 #include <JuceHeader.h>
+#elif __has_include("../build-local/Vayu_artefacts/JuceLibraryCode/JuceHeader.h")
+#include "../build-local/Vayu_artefacts/JuceLibraryCode/JuceHeader.h"
+#else
+#error Could not locate JuceHeader.h
+#endif
 #include "PluginProcessor.h"
+#include "ModernKnobLookAndFeel.h"
 
 class VayuAudioProcessorEditor : public juce::AudioProcessorEditor,
                                     private juce::Timer
@@ -15,20 +22,6 @@ public:
 
 private:
     void timerCallback() override;
-
-    class AmpLookAndFeel : public juce::LookAndFeel_V4
-    {
-    public:
-        void drawRotarySlider(juce::Graphics& g,
-                              int x,
-                              int y,
-                              int width,
-                              int height,
-                              float sliderPosProportional,
-                              float rotaryStartAngle,
-                              float rotaryEndAngle,
-                              juce::Slider& slider) override;
-    };
 
     enum class UiTab { amp = 0, fx, tools };
     enum class UiScale { small = 0, medium, large, xlarge };
@@ -146,6 +139,7 @@ private:
     juce::TextButton clearIrAButton { "Clear A" };
     juce::TextButton loadIrBButton { "Load B" };
     juce::TextButton clearIrBButton { "Clear B" };
+    juce::TextButton autoAlignCabButton { "Auto Align B" };
     juce::TextButton savePresetButton { "Save Preset" };
     juce::TextButton loadPresetButton { "Load Preset" };
     juce::TextButton captureAButton { "Capture A" };
@@ -154,12 +148,18 @@ private:
     juce::TextButton clearBackgroundButton { "Clear Background" };
     juce::TextButton loadNamButton  { "Load NAM"  };
     juce::TextButton clearNamButton  { "Clear NAM" };
+    juce::ToggleButton namBypassToggle { "NAM Bypass" };
+    juce::ToggleButton namAutoMatchToggle { "NAM Auto Match" };
     juce::ToggleButton compareABToggle { "Compare B" };
     juce::ToggleButton tunerToggle { "Show Tuner" };
     juce::ToggleButton irPhaseToggle { "IR Phase" };
     juce::ToggleButton delaySyncToggle { "Delay Sync" };
     juce::ToggleButton cabFlipAButton { "Flip A" };
     juce::ToggleButton cabFlipBButton { "Flip B" };
+    juce::ToggleButton metalModeToggle { "Metal Mode" };
+    juce::ToggleButton wahEnableToggle { "Wah" };
+    juce::ToggleButton wahAutoToggle { "Auto Wah" };
+    juce::ToggleButton killSwitchToggle { "Kill Switch" };
     juce::TextButton undoButton { "Undo" };
     juce::TextButton redoButton { "Redo" };
     juce::ComboBox ampTypeCombo;
@@ -168,16 +168,21 @@ private:
     juce::Label oversamplingLabel { {}, "Oversampling" };
     juce::ComboBox delayDivisionCombo;
     juce::Label delayDivisionLabel { {}, "Division" };
+    juce::ComboBox killRateCombo;
+    juce::Label killRateLabel { {}, "Kill Rate" };
     juce::ComboBox midiParamCombo;
     juce::TextButton midiLearnButton { "MIDI Learn" };
     juce::Label irStatusLabel;
     juce::Label irStatusALabel;
     juce::Label irStatusBLabel;
+    juce::Label cabAlignStatusLabel;
     juce::Label tunerNoteLabel;
     juce::Label tunerDetailLabel;
     juce::Label midiMapStatusLabel;
     juce::Label backgroundStatusLabel;
     juce::Label namStatusLabel;
+    juce::Label namMatchLabel;
+    juce::Label namBlendLabel { {}, "NAM Blend" };
     juce::Rectangle<int> inputMeterBounds;
     juce::Rectangle<int> outputMeterBounds;
 
@@ -203,6 +208,11 @@ private:
     juce::Slider irLowCutSlider;
     juce::Slider irHighCutSlider;
     juce::Slider irLevelSlider;
+    juce::Slider pitchShiftSlider;
+    juce::Slider tightLowCutSlider;
+    juce::Slider wahCenterSlider;
+    juce::Slider wahDepthSlider;
+    juce::Slider killDepthSlider;
     juce::Label  driveLabel  { {}, "Drive" };
     juce::Label  volumeLabel { {}, "Volume" };
     juce::Label  gateLabel { {}, "Gate" };
@@ -225,6 +235,11 @@ private:
     juce::Label  irLowCutLabel { {}, "IR Low Cut" };
     juce::Label  irHighCutLabel { {}, "IR High Cut" };
     juce::Label  irLevelLabel { {}, "IR Level" };
+    juce::Label  pitchShiftLabel { {}, "Pitch" };
+    juce::Label  tightLowCutLabel { {}, "Tight Cut" };
+    juce::Label  wahCenterLabel { {}, "Wah Freq" };
+    juce::Label  wahDepthLabel { {}, "Wah Depth" };
+    juce::Label  killDepthLabel { {}, "Kill Depth" };
 
     std::unique_ptr<juce::FileChooser> irChooser;
     std::unique_ptr<juce::FileChooser> presetChooser;
@@ -233,9 +248,10 @@ private:
     juce::MemoryBlock snapshotA;
     juce::MemoryBlock snapshotB;
     juce::Image backgroundImage;
-    AmpLookAndFeel ampLookAndFeel;
+    ModernKnobLookAndFeel ampLookAndFeel;
     UiTab currentTab = UiTab::amp;
     UiScale currentScale = UiScale::medium;
+    float uiAnimationPhase = 0.0f;
 
     // Reverb advanced controls
     juce::Slider reverbRoomSizeSlider;
@@ -259,6 +275,7 @@ private:
     juce::Slider delayFeedbackSlider;
     juce::Slider delayModRateSlider;
     juce::Slider delayModDepthSlider;
+    juce::Slider namBlendSlider;
     juce::Label  delayFeedbackLabel { {}, "Feedback" };
     juce::Label  delayModRateLabel  { {}, "Mod Rate" };
     juce::Label  delayModDepthLabel { {}, "Mod Depth" };
@@ -328,4 +345,17 @@ private:
     juce::AudioProcessorValueTreeState::ButtonAttachment cabFlipAAttachment;
     juce::AudioProcessorValueTreeState::ButtonAttachment cabFlipBAttachment;
     juce::AudioProcessorValueTreeState::ComboBoxAttachment oversamplingAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment metalModeAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment tightLowCutAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment pitchShiftAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment wahEnableAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment wahAutoAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment wahCenterAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment wahDepthAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment killSwitchAttachment;
+    juce::AudioProcessorValueTreeState::ComboBoxAttachment killRateAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment killDepthAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment namBypassAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment namAutoMatchAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment namBlendAttachment;
 };

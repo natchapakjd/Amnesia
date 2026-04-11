@@ -57,6 +57,8 @@ juce_generate_juce_header(Vayu)
 
 target_sources(Vayu
     PRIVATE
+    src/ModernKnobLookAndFeel.h
+    src/ModernKnobLookAndFeel.cpp
         src/PluginEditor.h
         src/PluginEditor.cpp
         src/PluginProcessor.h
