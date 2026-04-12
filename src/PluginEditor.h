@@ -8,7 +8,15 @@
 #error Could not locate JuceHeader.h
 #endif
 #include "PluginProcessor.h"
+#if __has_include("./ModernKnobLookAndFeel.h")
+#include "./ModernKnobLookAndFeel.h"
+#elif __has_include("ModernKnobLookAndFeel.h")
 #include "ModernKnobLookAndFeel.h"
+#elif __has_include("src/ModernKnobLookAndFeel.h")
+#include "src/ModernKnobLookAndFeel.h"
+#else
+#error Could not locate ModernKnobLookAndFeel.h
+#endif
 
 class VayuAudioProcessorEditor : public juce::AudioProcessorEditor,
                                     private juce::Timer
@@ -358,4 +366,111 @@ private:
     juce::AudioProcessorValueTreeState::ButtonAttachment namBypassAttachment;
     juce::AudioProcessorValueTreeState::ButtonAttachment namAutoMatchAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment namBlendAttachment;
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  NEW EFFECT UI CONTROLS
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Distortion
+    juce::ToggleButton distEnableToggle { "Dist" };
+    juce::ComboBox distModeCombo;
+    juce::Slider distGainSlider, distDriveSlider, distToneSlider, distMixSlider, distOutputSlider;
+    juce::Slider distTightSlider, distHiCutSlider, distPresenceSlider, distGateSlider;
+    juce::Label  distModeLabel { {}, "Mode" }, distGainLabel { {}, "Gain" }, distDriveLabel { {}, "Drive" }, distToneLabel { {}, "Tone" },
+                 distMixLabel { {}, "Mix" }, distOutputLabel { {}, "Output" };
+    juce::Label  distTightLabel { {}, "LowCut" }, distHiCutLabel { {}, "HiCut" },
+                 distPresenceLabel { {}, "Presence" }, distGateLabel { {}, "Gate" };
+    juce::AudioProcessorValueTreeState::ButtonAttachment distEnableAttachment;
+    juce::AudioProcessorValueTreeState::ComboBoxAttachment distModeAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment distGainAttachment, distDriveAttachment,
+        distToneAttachment, distMixAttachment, distOutputAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment distTightAttachment, distHiCutAttachment,
+        distPresenceAttachment, distGateAttachment;
+
+    // Compressor
+    juce::ToggleButton compEnableToggle { "Comp" };
+    juce::Slider compThreshSlider, compRatioSlider, compAttackSlider, compReleaseSlider, compMakeupSlider, compMixSlider;
+    juce::Label  compThreshLabel { {}, "Thresh" }, compRatioLabel { {}, "Ratio" },
+                 compAttackLabel { {}, "Attack" }, compReleaseLabel { {}, "Release" },
+                 compMakeupLabel { {}, "Makeup" }, compMixLabel { {}, "Mix" };
+    juce::AudioProcessorValueTreeState::ButtonAttachment compEnableAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment compThreshAttachment, compRatioAttachment,
+        compAttackAttachment, compReleaseAttachment, compMakeupAttachment, compMixAttachment;
+
+    // Chorus
+    juce::ToggleButton chorusEnableToggle { "Chorus" };
+    juce::Slider chorusRateSlider, chorusDepthSlider, chorusMixSlider;
+    juce::Label  chorusRateLabel { {}, "Rate" }, chorusDepthLabel { {}, "Depth" }, chorusMixLabel { {}, "Mix" };
+    juce::AudioProcessorValueTreeState::ButtonAttachment chorusEnableAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment chorusRateAttachment, chorusDepthAttachment, chorusMixAttachment;
+
+    // Phaser
+    juce::ToggleButton phaserEnableToggle { "Phaser" };
+    juce::Slider phaserRateSlider, phaserDepthSlider, phaserFeedbackSlider, phaserMixSlider;
+    juce::Label  phaserRateLabel { {}, "Rate" }, phaserDepthLabel { {}, "Depth" },
+                 phaserFeedbackLabel { {}, "Feedback" }, phaserMixLabel { {}, "Mix" };
+    juce::AudioProcessorValueTreeState::ButtonAttachment phaserEnableAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment phaserRateAttachment, phaserDepthAttachment,
+        phaserFeedbackAttachment, phaserMixAttachment;
+
+    // Flanger
+    juce::ToggleButton flangerEnableToggle { "Flanger" };
+    juce::Slider flangerRateSlider, flangerDepthSlider, flangerFeedbackSlider, flangerMixSlider;
+    juce::Label  flangerRateLabel { {}, "Rate" }, flangerDepthLabel { {}, "Depth" },
+                 flangerFeedbackLabel { {}, "Feedback" }, flangerMixLabel { {}, "Mix" };
+    juce::AudioProcessorValueTreeState::ButtonAttachment flangerEnableAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment flangerRateAttachment, flangerDepthAttachment,
+        flangerFeedbackAttachment, flangerMixAttachment;
+
+    // Tremolo
+    juce::ToggleButton tremoloEnableToggle { "Tremolo" };
+    juce::ToggleButton tremoloSyncToggle { "Sync" };
+    juce::Slider tremoloRateSlider, tremoloDepthSlider;
+    juce::ComboBox tremoloShapeCombo;
+    juce::ComboBox tremoloDivisionCombo;
+    juce::Label  tremoloRateLabel { {}, "Rate" }, tremoloDepthLabel { {}, "Depth" }, tremoloShapeLabel { {}, "Shape" },
+                 tremoloDivisionLabel { {}, "Div" };
+    juce::AudioProcessorValueTreeState::ButtonAttachment tremoloEnableAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment tremoloSyncAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment tremoloRateAttachment, tremoloDepthAttachment;
+    juce::AudioProcessorValueTreeState::ComboBoxAttachment tremoloShapeAttachment, tremoloDivisionAttachment;
+
+    // Parametric EQ
+    juce::ToggleButton peqEnableToggle { "PEQ" };
+    juce::Slider peqFreq1Slider, peqGain1Slider, peqQ1Slider;
+    juce::Slider peqFreq2Slider, peqGain2Slider, peqQ2Slider;
+    juce::Slider peqFreq3Slider, peqGain3Slider, peqQ3Slider;
+    juce::Label  peqFreq1Label { {}, "Freq1" }, peqGain1Label { {}, "Gain1" }, peqQ1Label { {}, "Q1" };
+    juce::Label  peqFreq2Label { {}, "Freq2" }, peqGain2Label { {}, "Gain2" }, peqQ2Label { {}, "Q2" };
+    juce::Label  peqFreq3Label { {}, "Freq3" }, peqGain3Label { {}, "Gain3" }, peqQ3Label { {}, "Q3" };
+    juce::AudioProcessorValueTreeState::ButtonAttachment peqEnableAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment peqFreq1Attachment, peqGain1Attachment, peqQ1Attachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment peqFreq2Attachment, peqGain2Attachment, peqQ2Attachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment peqFreq3Attachment, peqGain3Attachment, peqQ3Attachment;
+
+    // Metronome
+    juce::ToggleButton metroEnableToggle { "Metro" };
+    juce::ToggleButton metroSyncToggle { "Host Sync" };
+    juce::TextButton tapTempoButton { "Tap Tempo" };
+    juce::Slider metroBpmSlider, metroLevelSlider;
+    juce::ComboBox metroTimeSigCombo;
+    juce::Label  metroBpmLabel { {}, "BPM" }, metroLevelLabel { {}, "Level" }, metroTimeSigLabel { {}, "Time Sig" };
+    juce::AudioProcessorValueTreeState::ButtonAttachment metroEnableAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment metroSyncAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment metroBpmAttachment, metroLevelAttachment;
+    juce::AudioProcessorValueTreeState::ComboBoxAttachment metroTimeSigAttachment;
+
+    // Looper
+    juce::TextButton looperRecordButton { "Rec" };
+    juce::TextButton looperPlayButton { "Play" };
+    juce::TextButton looperStopButton { "Stop" };
+    juce::TextButton looperClearButton { "Clear" };
+    juce::Slider looperLevelSlider;
+    juce::Label  looperLevelLabel { {}, "Loop Vol" };
+    juce::Label  looperStatusLabel;
+    juce::AudioProcessorValueTreeState::SliderAttachment looperLevelAttachment;
+
+    double lastTapTempoMs = 0.0;
+    std::array<double, 4> tapTempoIntervals {};
+    int tapTempoCount = 0;
 };

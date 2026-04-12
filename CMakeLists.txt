@@ -25,16 +25,38 @@ endif()
 # ── NeuralAmpModelerCore (NAM) ─────────────────────────────────────────────
 option(VAYU_WITH_NAM "Download and link NeuralAmpModelerCore" ON)
 if(VAYU_WITH_NAM)
-    set(NAM_LOCAL_PATH "${CMAKE_SOURCE_DIR}/vendor/NeuralAmpModelerCore")
-    if(EXISTS "${NAM_LOCAL_PATH}/CMakeLists.txt")
-        add_subdirectory("${NAM_LOCAL_PATH}" NeuralAmpModelerCore)
+    # Resolve source directory: vendor/ → _deps/ (FetchContent cache) → download fresh
+    set(_NAM_VENDOR "${CMAKE_SOURCE_DIR}/vendor/NeuralAmpModelerCore")
+    set(_NAM_DEPS   "${CMAKE_BINARY_DIR}/_deps/neuralampmodelercore-src")
+
+    if(EXISTS "${_NAM_VENDOR}/NAM/get_dsp.h")
+        set(NAM_SOURCE_DIR "${_NAM_VENDOR}")
+    elseif(EXISTS "${_NAM_DEPS}/NAM/get_dsp.h")
+        set(NAM_SOURCE_DIR "${_NAM_DEPS}")
     else()
         FetchContent_Declare(
             NeuralAmpModelerCore
             GIT_REPOSITORY https://github.com/sdatkinson/NeuralAmpModelerCore.git
             GIT_TAG        main
         )
-        FetchContent_MakeAvailable(NeuralAmpModelerCore)
+        FetchContent_Populate(NeuralAmpModelerCore)
+        set(NAM_SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/neuralampmodelercore-src")
+    endif()
+
+    message(STATUS "NAM source dir: ${NAM_SOURCE_DIR}")
+
+    file(GLOB NAM_SOURCES "${NAM_SOURCE_DIR}/NAM/*.cpp")
+    set(VAYU_NAM_SOURCES ${NAM_SOURCES})
+    set(VAYU_NAM_INCLUDE_DIRS
+        "${NAM_SOURCE_DIR}"
+        "${NAM_SOURCE_DIR}/Dependencies/eigen"
+        "${NAM_SOURCE_DIR}/Dependencies/nlohmann"
+        "${NAM_SOURCE_DIR}/Dependencies/AudioDSPTools"
+    )
+    if(WIN32)
+        set(VAYU_NAM_COMPILE_DEFINITIONS NOMINMAX WIN32_LEAN_AND_MEAN NAM_SAMPLE_FLOAT)
+    else()
+        set(VAYU_NAM_COMPILE_DEFINITIONS NAM_SAMPLE_FLOAT)
     endif()
 endif()
 # ───────────────────────────────────────────────────────────────────────────
@@ -63,19 +85,26 @@ target_sources(Vayu
         src/PluginEditor.cpp
         src/PluginProcessor.h
         src/PluginProcessor.cpp
+        ${VAYU_NAM_SOURCES}
 )
+
+if(VAYU_WITH_NAM)
+    target_include_directories(Vayu PRIVATE ${VAYU_NAM_INCLUDE_DIRS})
+endif()
 
 target_compile_definitions(Vayu
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
+        $<$<BOOL:${VAYU_WITH_NAM}>:NAM_SAMPLE_FLOAT>
+    PRIVATE
+        ${VAYU_NAM_COMPILE_DEFINITIONS}
 )
 
 target_link_libraries(Vayu
     PRIVATE
         juce::juce_audio_utils
         juce::juce_dsp
-        $<$<BOOL:${VAYU_WITH_NAM}>:NeuralAmpModelerCore>
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

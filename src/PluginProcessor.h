@@ -77,8 +77,16 @@ public:
     void undoLastChange();
     void redoLastChange();
 
+    struct MidiLearnTarget
+    {
+        const char* label;
+        const char* paramId;
+        const char* stateKey;
+    };
+
     void beginMidiLearnForParam(int paramIndex);
     juce::String getMidiMappingDescription() const;
+    static const std::vector<MidiLearnTarget>& getMidiLearnTargets();
 
     struct FactoryPreset
     {
@@ -93,6 +101,16 @@ public:
     void clearNamModel();
     juce::String getNamModelPath() const;
     float getNamMatchGainDb() const;
+    juce::String getNamStatusText() const;
+    bool isNamAvailableInBuild() const;
+    bool isNamLoaded() const;
+
+    // Looper control
+    enum class LooperAction { Record, Play, Stop, Clear };
+    void looperTrigger(LooperAction action);
+    bool isLooperRecording() const;
+    bool isLooperPlaying() const;
+    int  getLooperLengthSamples() const;
 
     // Spectrum FIFO — accessed from editor timer thread
     static constexpr int kSpecFifoSize = 512;
@@ -116,6 +134,7 @@ private:
     void applyCabinetSlotLoadIfPrepared(int slotIndex);
     void updateTuner(const juce::AudioBuffer<float>& buffer);
     void handleMidiLearnAndMapping(juce::MidiBuffer& midiMessages);
+    double resolveTempoBpm(double fallbackBpm) const;
 
     juce::dsp::Convolution cabinetConvolutionA;
     juce::dsp::Convolution cabinetConvolutionB;
@@ -165,9 +184,60 @@ private:
     float wahLfoPhase = 0.0f;
     int processingChannels = 2;
 
+    // Compressor state
+    float compEnvelope = 0.0f;
+
+    // Distortion tone filter state (stereo)
+    float distToneStateL = 0.0f;
+    float distToneStateR = 0.0f;
+    float distGateEnv = 0.0f;
+    float distGateGain = 1.0f;
+    bool distGateOpen = true;
+
+    // Chorus / Flanger delay lines (per channel)
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> chorusDelayL { 4096 };
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> chorusDelayR { 4096 };
+    float chorusLfoPhase = 0.0f;
+
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> flangerDelayL { 2048 };
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> flangerDelayR { 2048 };
+    float flangerLfoPhase = 0.0f;
+    float flangerFeedbackSampleL = 0.0f;
+    float flangerFeedbackSampleR = 0.0f;
+
+    // Phaser (4-stage allpass per channel)
+    static constexpr int kPhaserStages = 4;
+    float phaserLfoPhase = 0.0f;
+    std::array<float, kPhaserStages> phaserAPStateL {};
+    std::array<float, kPhaserStages> phaserAPStateR {};
+
+    // Tremolo
+    float tremoloLfoPhase = 0.0f;
+
+    // Parametric EQ (3 bands, stereo)
+    juce::dsp::IIR::Filter<float> peqL1, peqL2, peqL3;
+    juce::dsp::IIR::Filter<float> peqR1, peqR2, peqR3;
+
+    // Metronome
+    float metroPhase = 0.0f;
+    int metroBeatCount = 0;
+    int metroCurrentClickBeat = 0;
+    float metroClickPhase = 0.0f;
+    float metroClickOscPhase = 0.0f;
+    bool metroClickActive = false;
+    bool hostWasPlaying = false;
+
+    // Looper
+    enum class LooperState { Stopped, Recording, Playing, Overdubbing };
+    LooperState looperState = LooperState::Stopped;
+    juce::AudioBuffer<float> looperBuffer;
+    int looperWritePos = 0;
+    int looperLength = 0;
+    int looperPlayPos = 0;
+
     juce::UndoManager undoManager;
     int learningParamIndex = -1;
-    std::array<int, 25> midiCCMap;  // init in constructor
+    std::vector<int> midiCCMap;
 
     juce::AudioBuffer<float> cabBufferA;
     juce::AudioBuffer<float> cabBufferB;
@@ -187,6 +257,7 @@ private:
     std::vector<float> namDryA;
     std::vector<float> namDryB;
     juce::String namModelPath;
+    juce::String namStatusText;
     float namMatchInRms = 0.0f;
     float namMatchOutRms = 0.0f;
     std::atomic<float> namMatchGainDb { 0.0f };

@@ -61,7 +61,62 @@ VayuAudioProcessorEditor::VayuAudioProcessorEditor(VayuAudioProcessor& processor
     delayModDepthAttachment(audioProcessor.apvts, "delayModDepth", delayModDepthSlider),
     namBypassAttachment(audioProcessor.apvts, "namBypass", namBypassToggle),
     namAutoMatchAttachment(audioProcessor.apvts, "namAutoMatch", namAutoMatchToggle),
-    namBlendAttachment(audioProcessor.apvts, "namBlend", namBlendSlider)
+    namBlendAttachment(audioProcessor.apvts, "namBlend", namBlendSlider),
+    // New effect attachments
+    distEnableAttachment(audioProcessor.apvts, "distEnable", distEnableToggle),
+    distModeAttachment(audioProcessor.apvts, "distMode", distModeCombo),
+    distGainAttachment(audioProcessor.apvts, "distGainDb", distGainSlider),
+    distDriveAttachment(audioProcessor.apvts, "distDrive", distDriveSlider),
+    distToneAttachment(audioProcessor.apvts, "distTone", distToneSlider),
+    distMixAttachment(audioProcessor.apvts, "distMix", distMixSlider),
+    distOutputAttachment(audioProcessor.apvts, "distOutputDb", distOutputSlider),
+    distTightAttachment(audioProcessor.apvts, "distTightHz", distTightSlider),
+    distHiCutAttachment(audioProcessor.apvts, "distHiCutHz", distHiCutSlider),
+    distPresenceAttachment(audioProcessor.apvts, "distPresenceDb", distPresenceSlider),
+    distGateAttachment(audioProcessor.apvts, "distGateDb", distGateSlider),
+    compEnableAttachment(audioProcessor.apvts, "compEnable", compEnableToggle),
+    compThreshAttachment(audioProcessor.apvts, "compThreshDb", compThreshSlider),
+    compRatioAttachment(audioProcessor.apvts, "compRatio", compRatioSlider),
+    compAttackAttachment(audioProcessor.apvts, "compAttackMs", compAttackSlider),
+    compReleaseAttachment(audioProcessor.apvts, "compReleaseMs", compReleaseSlider),
+    compMakeupAttachment(audioProcessor.apvts, "compMakeupDb", compMakeupSlider),
+    compMixAttachment(audioProcessor.apvts, "compMix", compMixSlider),
+    chorusEnableAttachment(audioProcessor.apvts, "chorusEnable", chorusEnableToggle),
+    chorusRateAttachment(audioProcessor.apvts, "chorusRate", chorusRateSlider),
+    chorusDepthAttachment(audioProcessor.apvts, "chorusDepth", chorusDepthSlider),
+    chorusMixAttachment(audioProcessor.apvts, "chorusMix", chorusMixSlider),
+    phaserEnableAttachment(audioProcessor.apvts, "phaserEnable", phaserEnableToggle),
+    phaserRateAttachment(audioProcessor.apvts, "phaserRate", phaserRateSlider),
+    phaserDepthAttachment(audioProcessor.apvts, "phaserDepth", phaserDepthSlider),
+    phaserFeedbackAttachment(audioProcessor.apvts, "phaserFeedback", phaserFeedbackSlider),
+    phaserMixAttachment(audioProcessor.apvts, "phaserMix", phaserMixSlider),
+    flangerEnableAttachment(audioProcessor.apvts, "flangerEnable", flangerEnableToggle),
+    flangerRateAttachment(audioProcessor.apvts, "flangerRate", flangerRateSlider),
+    flangerDepthAttachment(audioProcessor.apvts, "flangerDepth", flangerDepthSlider),
+    flangerFeedbackAttachment(audioProcessor.apvts, "flangerFeedback", flangerFeedbackSlider),
+    flangerMixAttachment(audioProcessor.apvts, "flangerMix", flangerMixSlider),
+    tremoloEnableAttachment(audioProcessor.apvts, "tremoloEnable", tremoloEnableToggle),
+    tremoloSyncAttachment(audioProcessor.apvts, "tremoloSync", tremoloSyncToggle),
+    tremoloRateAttachment(audioProcessor.apvts, "tremoloRate", tremoloRateSlider),
+    tremoloDepthAttachment(audioProcessor.apvts, "tremoloDepth", tremoloDepthSlider),
+    tremoloShapeAttachment(audioProcessor.apvts, "tremoloShape", tremoloShapeCombo),
+    tremoloDivisionAttachment(audioProcessor.apvts, "tremoloDivision", tremoloDivisionCombo),
+    peqEnableAttachment(audioProcessor.apvts, "peqEnable", peqEnableToggle),
+    peqFreq1Attachment(audioProcessor.apvts, "peqBand1Freq", peqFreq1Slider),
+    peqGain1Attachment(audioProcessor.apvts, "peqBand1GainDb", peqGain1Slider),
+    peqQ1Attachment(audioProcessor.apvts, "peqBand1Q", peqQ1Slider),
+    peqFreq2Attachment(audioProcessor.apvts, "peqBand2Freq", peqFreq2Slider),
+    peqGain2Attachment(audioProcessor.apvts, "peqBand2GainDb", peqGain2Slider),
+    peqQ2Attachment(audioProcessor.apvts, "peqBand2Q", peqQ2Slider),
+    peqFreq3Attachment(audioProcessor.apvts, "peqBand3Freq", peqFreq3Slider),
+    peqGain3Attachment(audioProcessor.apvts, "peqBand3GainDb", peqGain3Slider),
+    peqQ3Attachment(audioProcessor.apvts, "peqBand3Q", peqQ3Slider),
+    metroEnableAttachment(audioProcessor.apvts, "metroEnable", metroEnableToggle),
+    metroSyncAttachment(audioProcessor.apvts, "metroSync", metroSyncToggle),
+    metroBpmAttachment(audioProcessor.apvts, "metroBpm", metroBpmSlider),
+    metroLevelAttachment(audioProcessor.apvts, "metroLevel", metroLevelSlider),
+    metroTimeSigAttachment(audioProcessor.apvts, "metroTimeSig", metroTimeSigCombo),
+    looperLevelAttachment(audioProcessor.apvts, "looperLevel", looperLevelSlider)
 {
     setLookAndFeel(&ampLookAndFeel);
 
@@ -235,31 +290,11 @@ VayuAudioProcessorEditor::VayuAudioProcessorEditor(VayuAudioProcessor& processor
     redoButton.onClick = [this] { audioProcessor.redoLastChange(); };
 
     addAndMakeVisible(midiParamCombo);
-    midiParamCombo.addItem("Drive", 1);
-    midiParamCombo.addItem("Output", 2);
-    midiParamCombo.addItem("Gate", 3);
-    midiParamCombo.addItem("Boost", 4);
-    midiParamCombo.addItem("Delay Mix", 5);
-    midiParamCombo.addItem("Reverb Mix", 6);
-    midiParamCombo.addItem("Cab Blend", 7);
-    midiParamCombo.addItem("Cab Pan", 8);
-    midiParamCombo.addItem("Cab A Level", 9);
-    midiParamCombo.addItem("Cab B Level", 10);
-    midiParamCombo.addItem("Delay Feedback", 11);
-    midiParamCombo.addItem("Delay Time", 12);
-    midiParamCombo.addItem("Reverb Room", 13);
-    midiParamCombo.addItem("Reverb Damping", 14);
-    midiParamCombo.addItem("Bass", 15);
-    midiParamCombo.addItem("Mid", 16);
-    midiParamCombo.addItem("Treble", 17);
-    midiParamCombo.addItem("Presence", 18);
-    midiParamCombo.addItem("Pitch", 19);
-    midiParamCombo.addItem("Tight Cut", 20);
-    midiParamCombo.addItem("Wah Freq", 21);
-    midiParamCombo.addItem("Wah Depth", 22);
-    midiParamCombo.addItem("Kill Depth", 23);
-    midiParamCombo.addItem("NAM Blend", 24);
-    midiParamCombo.addItem("Input Trim", 25);
+    {
+        const auto& midiTargets = VayuAudioProcessor::getMidiLearnTargets();
+        for (int i = 0; i < static_cast<int>(midiTargets.size()); ++i)
+            midiParamCombo.addItem(midiTargets[static_cast<size_t>(i)].label, i + 1);
+    }
     midiParamCombo.setSelectedId(1);
 
     addAndMakeVisible(midiLearnButton);
@@ -446,6 +481,152 @@ VayuAudioProcessorEditor::VayuAudioProcessorEditor(VayuAudioProcessor& processor
     setupCompactLabel(wahDepthLabel);
     setupCompactLabel(killDepthLabel);
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  NEW FX CONTROLS SETUP
+    // ═══════════════════════════════════════════════════════════════════
+    // Distortion
+    distModeLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(distModeLabel);
+    addAndMakeVisible(distModeCombo);
+    distModeCombo.addItem("Tight", 1);
+    distModeCombo.addItem("Brutal", 2);
+    distModeCombo.addItem("Fuzz", 3);
+    distModeCombo.addItem("Insane", 4);
+    setupSlider(distGainSlider, distGainLabel);
+    setupSlider(distDriveSlider, distDriveLabel);
+    setupSlider(distToneSlider, distToneLabel);
+    setupSlider(distMixSlider, distMixLabel);
+    setupSlider(distOutputSlider, distOutputLabel);
+    setupSlider(distTightSlider, distTightLabel);
+    setupSlider(distHiCutSlider, distHiCutLabel);
+    setupSlider(distPresenceSlider, distPresenceLabel);
+    setupSlider(distGateSlider, distGateLabel);
+    addAndMakeVisible(distEnableToggle);
+
+    // Compressor
+    setupSlider(compThreshSlider, compThreshLabel);
+    setupSlider(compRatioSlider, compRatioLabel);
+    setupSlider(compAttackSlider, compAttackLabel);
+    setupSlider(compReleaseSlider, compReleaseLabel);
+    setupSlider(compMakeupSlider, compMakeupLabel);
+    setupSlider(compMixSlider, compMixLabel);
+    addAndMakeVisible(compEnableToggle);
+
+    // Chorus
+    setupSlider(chorusRateSlider, chorusRateLabel);
+    setupSlider(chorusDepthSlider, chorusDepthLabel);
+    setupSlider(chorusMixSlider, chorusMixLabel);
+    addAndMakeVisible(chorusEnableToggle);
+
+    // Phaser
+    setupSlider(phaserRateSlider, phaserRateLabel);
+    setupSlider(phaserDepthSlider, phaserDepthLabel);
+    setupSlider(phaserFeedbackSlider, phaserFeedbackLabel);
+    setupSlider(phaserMixSlider, phaserMixLabel);
+    addAndMakeVisible(phaserEnableToggle);
+
+    // Flanger
+    setupSlider(flangerRateSlider, flangerRateLabel);
+    setupSlider(flangerDepthSlider, flangerDepthLabel);
+    setupSlider(flangerFeedbackSlider, flangerFeedbackLabel);
+    setupSlider(flangerMixSlider, flangerMixLabel);
+    addAndMakeVisible(flangerEnableToggle);
+
+    // Tremolo
+    setupSlider(tremoloRateSlider, tremoloRateLabel);
+    setupSlider(tremoloDepthSlider, tremoloDepthLabel);
+    addAndMakeVisible(tremoloEnableToggle);
+    addAndMakeVisible(tremoloSyncToggle);
+    tremoloShapeLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(tremoloShapeLabel);
+    addAndMakeVisible(tremoloShapeCombo);
+    tremoloShapeCombo.addItem("Sine", 1);
+    tremoloShapeCombo.addItem("Square", 2);
+    tremoloShapeCombo.addItem("Triangle", 3);
+    tremoloDivisionLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(tremoloDivisionLabel);
+    addAndMakeVisible(tremoloDivisionCombo);
+    tremoloDivisionCombo.addItem("1/4", 1);
+    tremoloDivisionCombo.addItem("1/8", 2);
+    tremoloDivisionCombo.addItem("1/8D", 3);
+    tremoloDivisionCombo.addItem("1/8T", 4);
+    tremoloDivisionCombo.addItem("1/16", 5);
+
+    // Parametric EQ
+    setupSlider(peqFreq1Slider, peqFreq1Label);
+    setupSlider(peqGain1Slider, peqGain1Label);
+    setupSlider(peqQ1Slider, peqQ1Label);
+    setupSlider(peqFreq2Slider, peqFreq2Label);
+    setupSlider(peqGain2Slider, peqGain2Label);
+    setupSlider(peqQ2Slider, peqQ2Label);
+    setupSlider(peqFreq3Slider, peqFreq3Label);
+    setupSlider(peqGain3Slider, peqGain3Label);
+    setupSlider(peqQ3Slider, peqQ3Label);
+    addAndMakeVisible(peqEnableToggle);
+
+    // Metronome
+    setupSlider(metroBpmSlider, metroBpmLabel);
+    setupSlider(metroLevelSlider, metroLevelLabel);
+    addAndMakeVisible(metroEnableToggle);
+    addAndMakeVisible(metroSyncToggle);
+    metroTimeSigLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(metroTimeSigLabel);
+    addAndMakeVisible(metroTimeSigCombo);
+    addAndMakeVisible(tapTempoButton);
+    metroTimeSigCombo.addItem("4/4", 1);
+    metroTimeSigCombo.addItem("3/4", 2);
+    metroTimeSigCombo.addItem("6/8", 3);
+    metroTimeSigCombo.addItem("5/4", 4);
+    metroTimeSigCombo.addItem("7/8", 5);
+    tapTempoButton.onClick = [this]
+    {
+        const double nowMs = juce::Time::getMillisecondCounterHiRes();
+        if (lastTapTempoMs > 0.0)
+        {
+            const double intervalMs = nowMs - lastTapTempoMs;
+            if (intervalMs > 250.0 && intervalMs < 2000.0)
+            {
+                tapTempoIntervals[static_cast<size_t>(tapTempoCount % static_cast<int>(tapTempoIntervals.size()))] = intervalMs;
+                ++tapTempoCount;
+
+                const int count = juce::jmin(tapTempoCount, static_cast<int>(tapTempoIntervals.size()));
+                double sum = 0.0;
+                for (int i = 0; i < count; ++i)
+                    sum += tapTempoIntervals[static_cast<size_t>(i)];
+
+                const float bpm = juce::jlimit(30.0f, 300.0f, static_cast<float>(60000.0 / (sum / static_cast<double>(count))));
+                if (auto* param = audioProcessor.apvts.getParameter("metroBpm"))
+                    param->setValueNotifyingHost(param->convertTo0to1(bpm));
+
+                midiMapStatusLabel.setText("Tap tempo: " + juce::String(bpm, 1) + " BPM", juce::dontSendNotification);
+            }
+            else
+            {
+                tapTempoCount = 0;
+            }
+        }
+
+        lastTapTempoMs = nowMs;
+    };
+
+    // Looper
+    setupSlider(looperLevelSlider, looperLevelLabel);
+    looperLevelSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    looperLevelSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 56, 18);
+    addAndMakeVisible(looperRecordButton);
+    addAndMakeVisible(looperPlayButton);
+    addAndMakeVisible(looperStopButton);
+    addAndMakeVisible(looperClearButton);
+    looperStatusLabel.setJustificationType(juce::Justification::centred);
+    looperStatusLabel.setColour(juce::Label::textColourId, juce::Colours::lightgreen);
+    looperStatusLabel.setText("Stopped", juce::dontSendNotification);
+    addAndMakeVisible(looperStatusLabel);
+    looperRecordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff8b2020));
+    looperRecordButton.onClick = [this] { audioProcessor.looperTrigger(VayuAudioProcessor::LooperAction::Record); };
+    looperPlayButton.onClick = [this] { audioProcessor.looperTrigger(VayuAudioProcessor::LooperAction::Play); };
+    looperStopButton.onClick = [this] { audioProcessor.looperTrigger(VayuAudioProcessor::LooperAction::Stop); };
+    looperClearButton.onClick = [this] { audioProcessor.looperTrigger(VayuAudioProcessor::LooperAction::Clear); };
+
     // Unified control styling for a cleaner, professional dark UI.
     auto styleSecondaryButton = [](juce::TextButton& b)
     {
@@ -498,14 +679,26 @@ VayuAudioProcessorEditor::VayuAudioProcessorEditor(VayuAudioProcessor& processor
     styleToggle(killSwitchToggle, juce::Colour(0xffff7070));
     styleToggle(namBypassToggle, juce::Colour(0xff5affb4));
     styleToggle(namAutoMatchToggle, juce::Colour(0xff5affb4));
+    styleToggle(distEnableToggle, juce::Colour(0xffff8c5e));
+    styleToggle(compEnableToggle, juce::Colour(0xffe6a040));
+    styleToggle(chorusEnableToggle, juce::Colour(0xff58d6ff));
+    styleToggle(phaserEnableToggle, juce::Colour(0xffb088ff));
+    styleToggle(flangerEnableToggle, juce::Colour(0xff50e0a0));
+    styleToggle(tremoloEnableToggle, juce::Colour(0xffff8860));
+    styleToggle(tremoloSyncToggle, juce::Colour(0xfff2c16b));
+    styleToggle(peqEnableToggle, juce::Colour(0xff6eccff));
+    styleToggle(metroEnableToggle, juce::Colour(0xffffe070));
+    styleToggle(metroSyncToggle, juce::Colour(0xffffd55c));
 
-    for (auto* combo : { &uiSizeCombo, &ampTypeCombo, &oversamplingCombo, &delayDivisionCombo, &killRateCombo, &midiParamCombo })
+    for (auto* combo : { &uiSizeCombo, &ampTypeCombo, &oversamplingCombo, &delayDivisionCombo, &killRateCombo, &midiParamCombo, &tremoloShapeCombo, &tremoloDivisionCombo, &metroTimeSigCombo, &distModeCombo })
     {
         combo->setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff141821));
         combo->setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff2f3642));
         combo->setColour(juce::ComboBox::textColourId, juce::Colour(0xffe6ebf4));
         combo->setColour(juce::ComboBox::arrowColourId, juce::Colour(0xff90a0b8));
     }
+
+    styleAccentButton(tapTempoButton);
 
     for (auto* status : { &midiMapStatusLabel, &backgroundStatusLabel, &namStatusLabel, &namMatchLabel, &irStatusLabel, &irStatusALabel, &irStatusBLabel, &cabAlignStatusLabel })
         status->setFont(status->getFont().withHeight(12.5f));
@@ -571,13 +764,13 @@ void VayuAudioProcessorEditor::paint(juce::Graphics& g)
     const float tabGap = fpx(5.0f);
     const float tabsEndX = fpx(10.0f) + 3.0f * tabW + 2.0f * tabGap + fpx(16.0f);
     const float titleFontH = juce::jmax(14.0f, headerH * 0.48f);
-    g.setFont(juce::Font("Arial", titleFontH, juce::Font::bold));
+    g.setFont(juce::Font(juce::FontOptions("Arial", titleFontH, juce::Font::bold)));
     g.setColour(juce::Colours::white.withAlpha(0.88f + 0.10f * pulse));
     g.drawFittedText("VAYU",
         juce::Rectangle<float>(tabsEndX, hInset, fpx(110.0f), headerH - hInset).toNearestInt(),
         juce::Justification::centredLeft, 1);
     // Tiny tagline
-    g.setFont(juce::Font("Arial", juce::jmax(8.5f, headerH * 0.22f), juce::Font::plain));
+    g.setFont(juce::Font(juce::FontOptions("Arial", juce::jmax(8.5f, headerH * 0.22f), juce::Font::plain)));
     g.setColour(juce::Colour(0xff3e4d66).withAlpha(0.85f));
     g.drawFittedText("AMP SIMULATOR",
         juce::Rectangle<float>(tabsEndX, hInset + titleFontH * 0.96f, fpx(120.0f), headerH - hInset).toNearestInt(),
@@ -620,7 +813,7 @@ void VayuAudioProcessorEditor::paint(juce::Graphics& g)
             g.fillRoundedRectangle(p, fpx(7.0f));
             g.setColour(juce::Colour(0xff253040).withAlpha(0.28f));
             g.drawRoundedRectangle(p, fpx(7.0f), 0.8f);
-            g.setFont(juce::Font("Arial", juce::jmax(9.0f, 10.0f * sf), juce::Font::plain));
+            g.setFont(juce::Font(juce::FontOptions("Arial", juce::jmax(9.0f, 10.0f * sf), juce::Font::plain)));
             g.setColour(juce::Colour(0xff3d5070).withAlpha(0.80f));
             g.drawText("SIGNAL", juce::Rectangle<float>(kAreaX + fpx(8.0f), kAreaY - fpx(13.0f),
                                                          fpx(80.0f), fpx(14.0f)).toNearestInt(),
@@ -634,7 +827,7 @@ void VayuAudioProcessorEditor::paint(juce::Graphics& g)
             g.fillRoundedRectangle(p, fpx(7.0f));
             g.setColour(juce::Colour(0xff253040).withAlpha(0.28f));
             g.drawRoundedRectangle(p, fpx(7.0f), 0.8f);
-            g.setFont(juce::Font("Arial", juce::jmax(9.0f, 10.0f * sf), juce::Font::plain));
+            g.setFont(juce::Font(juce::FontOptions("Arial", juce::jmax(9.0f, 10.0f * sf), juce::Font::plain)));
             g.setColour(juce::Colour(0xff3d5070).withAlpha(0.80f));
             g.drawText("EQ", juce::Rectangle<float>(kAreaX + fpx(8.0f), rowY - fpx(13.0f),
                                                      fpx(48.0f), fpx(14.0f)).toNearestInt(),
@@ -924,153 +1117,417 @@ void VayuAudioProcessorEditor::resized()
     // ─── FX TAB ───────────────────────────────────────────────────────
     else if (currentTab == UiTab::fx)
     {
-        const int cols  = 4;
-        const int rows  = 4;
-        const int totalGapX = gapX * (cols - 1);
-        const int totalGapY = gapY * (rows - 1);
-        auto kArea = contentArea; // use full content area
-        const int cellW = (kArea.getWidth()  - totalGapX) / cols;
-        const int cellH = (kArea.getHeight() - totalGapY) / rows;
-        const int inX = juce::jmax(8, cellW / 8);
-        const int inY = juce::jmax(8, cellH / 8);
+        // Split into two zones: knob grid (top 40%) and effects strips (bottom 60%)
+        const int knobGridH = juce::jmax(160, static_cast<int>(contentArea.getHeight() * 0.40f));
+        auto knobArea = contentArea.removeFromTop(knobGridH);
+        contentArea.removeFromTop(4);
+        auto fxStrips = contentArea;
 
-        auto setK = [&](juce::Slider& s, int c, int r)
+        // ── KNOB GRID: 4 cols × 2 rows ──
         {
-            s.setBounds(kArea.getX() + c*(cellW+gapX) + inX,
-                        kArea.getY() + r*(cellH+gapY) + inY,
-                        cellW - inX*2, cellH - inY*2);
-        };
-        // Row 0: IR chain
-        setK(irLowCutSlider,       0, 0); setK(irHighCutSlider,     1, 0);
-        setK(irLevelSlider,        2, 0); setK(cabPanSlider,         3, 0);
-        // Row 1: Cab + sends
-        setK(cabBlendSlider,       0, 1); setK(delayTimeSlider,     1, 1);
-        setK(delayMixSlider,       2, 1); setK(reverbMixSlider,     3, 1);
-        // Row 2: Reverb
-        setK(reverbRoomSizeSlider, 0, 2); setK(reverbDampingSlider, 1, 2);
-        setK(reverbWidthSlider,    2, 2); setK(reverbPreDelaySlider, 3, 2);
-        // Row 3: Delay detail
-        setK(delayFeedbackSlider,  0, 3); setK(delayModRateSlider,  1, 3);
-        setK(delayModDepthSlider,  2, 3);
+            const int cols = 4, rows = 2;
+            const int totalGapX = gapX * (cols - 1), totalGapY = gapY * (rows - 1);
+            const int cellW = (knobArea.getWidth()  - totalGapX) / cols;
+            const int cellH = (knobArea.getHeight() - totalGapY) / rows;
+            const int inX = juce::jmax(4, cellW / 10);
+            const int inY = juce::jmax(4, cellH / 10);
 
-        // Cab level sliders (in the dual-purpose row above — already set above)
-        // IR Phase / Flip toggles inside inY gap of row 0 col 2-3 area
-        const int tX2  = kArea.getX() + 2*(cellW+gapX);
-        const int tX3  = kArea.getX() + 3*(cellW+gapX);
-        const int tTogH = juce::jmax(18, inY - 2);
-        irPhaseToggle.setBounds (tX2, kArea.getY() + 2,        cellW, tTogH);
-        cabFlipAButton.setBounds(tX2, kArea.getY() + 2 + inY,  cellW, tTogH);
-        cabFlipBButton.setBounds(tX3, kArea.getY() + 2 + inY,  cellW, tTogH);
+            auto setK = [&](juce::Slider& s, int c, int r)
+            {
+                s.setBounds(knobArea.getX() + c*(cellW+gapX) + inX,
+                            knobArea.getY() + r*(cellH+gapY) + inY,
+                            cellW - inX*2, cellH - inY*2);
+            };
+            // Row 0: IR + Cab
+            setK(irLowCutSlider,   0, 0); setK(irHighCutSlider,  1, 0);
+            setK(irLevelSlider,    2, 0); setK(cabBlendSlider,   3, 0);
+            // Row 1: Delay + Reverb summary
+            setK(delayTimeSlider,  0, 1); setK(delayMixSlider,   1, 1);
+            setK(reverbMixSlider,  2, 1); setK(cabPanSlider,     3, 1);
+
+            // IR toggles
+            const int tTogH = juce::jmax(16, inY - 2);
+            irPhaseToggle.setBounds (knobArea.getX() + 2*(cellW+gapX), knobArea.getY() + 2, cellW, tTogH);
+            cabFlipAButton.setBounds(knobArea.getX() + 2*(cellW+gapX), knobArea.getY() + 2 + inY, cellW, tTogH);
+            cabFlipBButton.setBounds(knobArea.getX() + 3*(cellW+gapX), knobArea.getY() + 2 + inY, cellW, tTogH);
+        }
+
+        // ── FX STRIPS: compact rows for each effect section ──
+        const int stripH = juce::jmax(20, static_cast<int>(22.0f * sf));
+        const int sGap = juce::jmax(2, px(3));
+        const int toggleW = juce::jmax(60, px(72));
+        const int spacing = px(4, 2);
+
+        // Reverb detail
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            reverbRoomSizeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            reverbRoomSizeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            reverbDampingSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            reverbDampingSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            reverbWidthSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            reverbWidthSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            reverbPreDelaySlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            reverbPreDelaySlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int rw = (r.getWidth() - spacing * 3) / 4;
+            reverbRoomSizeSlider.setBounds(r.removeFromLeft(rw)); r.removeFromLeft(spacing);
+            reverbDampingSlider.setBounds(r.removeFromLeft(rw)); r.removeFromLeft(spacing);
+            reverbWidthSlider.setBounds(r.removeFromLeft(rw)); r.removeFromLeft(spacing);
+            reverbPreDelaySlider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // Delay detail
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            delayFeedbackSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            delayFeedbackSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            delayModRateSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            delayModRateSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            delayModDepthSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            delayModDepthSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int rw = (r.getWidth() - spacing * 2) / 3;
+            delayFeedbackSlider.setBounds(r.removeFromLeft(rw)); r.removeFromLeft(spacing);
+            delayModRateSlider.setBounds(r.removeFromLeft(rw)); r.removeFromLeft(spacing);
+            delayModDepthSlider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // DISTORTION strip
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            distEnableToggle.setBounds(r.removeFromLeft(toggleW)); r.removeFromLeft(spacing);
+            distModeLabel.setBounds(r.removeFromLeft(px(34))); 
+            distModeCombo.setBounds(r.removeFromLeft(px(90))); r.removeFromLeft(spacing);
+            distGainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distGainSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            distDriveSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distDriveSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            distToneSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distToneSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            distMixSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distMixSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            distOutputSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distOutputSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int dw = (r.getWidth() - spacing * 4) / 5;
+            distGainSlider.setBounds(r.removeFromLeft(dw)); r.removeFromLeft(spacing);
+            distDriveSlider.setBounds(r.removeFromLeft(dw)); r.removeFromLeft(spacing);
+            distToneSlider.setBounds(r.removeFromLeft(dw)); r.removeFromLeft(spacing);
+            distMixSlider.setBounds(r.removeFromLeft(dw)); r.removeFromLeft(spacing);
+            distOutputSlider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // DIST EQ/CLEAN strip
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            r.removeFromLeft(toggleW + spacing + px(34) + px(90) + spacing);
+            distTightSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distTightSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            distHiCutSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distHiCutSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            distPresenceSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distPresenceSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            distGateSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            distGateSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int dw = (r.getWidth() - spacing * 3) / 4;
+            distTightSlider.setBounds(r.removeFromLeft(dw)); r.removeFromLeft(spacing);
+            distHiCutSlider.setBounds(r.removeFromLeft(dw)); r.removeFromLeft(spacing);
+            distPresenceSlider.setBounds(r.removeFromLeft(dw)); r.removeFromLeft(spacing);
+            distGateSlider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // COMPRESSOR strip
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            compEnableToggle.setBounds(r.removeFromLeft(toggleW)); r.removeFromLeft(spacing);
+            compThreshSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            compThreshSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            compRatioSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            compRatioSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            compAttackSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            compAttackSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            compReleaseSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            compReleaseSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            compMakeupSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            compMakeupSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            compMixSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            compMixSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int cw = (r.getWidth() - spacing * 5) / 6;
+            compThreshSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            compRatioSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            compAttackSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            compReleaseSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            compMakeupSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            compMixSlider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // CHORUS strip
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            chorusEnableToggle.setBounds(r.removeFromLeft(toggleW)); r.removeFromLeft(spacing);
+            chorusRateSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            chorusRateSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            chorusDepthSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            chorusDepthSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            chorusMixSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            chorusMixSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int cw = (r.getWidth() - spacing * 2) / 3;
+            chorusRateSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            chorusDepthSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            chorusMixSlider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // PHASER strip
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            phaserEnableToggle.setBounds(r.removeFromLeft(toggleW)); r.removeFromLeft(spacing);
+            phaserRateSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            phaserRateSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            phaserDepthSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            phaserDepthSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            phaserFeedbackSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            phaserFeedbackSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            phaserMixSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            phaserMixSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int cw = (r.getWidth() - spacing * 3) / 4;
+            phaserRateSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            phaserDepthSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            phaserFeedbackSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            phaserMixSlider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // FLANGER strip
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            flangerEnableToggle.setBounds(r.removeFromLeft(toggleW)); r.removeFromLeft(spacing);
+            flangerRateSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            flangerRateSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            flangerDepthSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            flangerDepthSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            flangerFeedbackSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            flangerFeedbackSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            flangerMixSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            flangerMixSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int cw = (r.getWidth() - spacing * 3) / 4;
+            flangerRateSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            flangerDepthSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            flangerFeedbackSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            flangerMixSlider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // TREMOLO strip
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            tremoloEnableToggle.setBounds(r.removeFromLeft(toggleW)); r.removeFromLeft(spacing);
+            tremoloSyncToggle.setBounds(r.removeFromLeft(px(56))); r.removeFromLeft(spacing);
+            tremoloRateSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            tremoloRateSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            tremoloDepthSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            tremoloDepthSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            const int cw = (r.getWidth() - spacing * 4 - px(30) - px(86) - px(24) - px(66)) / 2;
+            tremoloRateSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            tremoloDepthSlider.setBounds(r.removeFromLeft(cw)); r.removeFromLeft(spacing);
+            tremoloShapeLabel.setBounds(r.removeFromLeft(px(30)));
+            tremoloShapeCombo.setBounds(r.removeFromLeft(px(86))); r.removeFromLeft(spacing);
+            tremoloDivisionLabel.setBounds(r.removeFromLeft(px(24)));
+            tremoloDivisionCombo.setBounds(r.removeFromLeft(px(66)));
+        }
+        fxStrips.removeFromTop(sGap);
+
+        // PEQ strip (3 bands in 9 sliders, 1 row each)
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            peqEnableToggle.setBounds(r.removeFromLeft(toggleW)); r.removeFromLeft(spacing);
+            peqFreq1Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqFreq1Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 16);
+            peqGain1Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqGain1Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            peqQ1Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqQ1Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 36, 16);
+            const int pw = (r.getWidth() - spacing * 2) / 3;
+            peqFreq1Slider.setBounds(r.removeFromLeft(pw)); r.removeFromLeft(spacing);
+            peqGain1Slider.setBounds(r.removeFromLeft(pw)); r.removeFromLeft(spacing);
+            peqQ1Slider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            r.removeFromLeft(toggleW + spacing); // align with knobs
+            peqFreq2Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqFreq2Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 16);
+            peqGain2Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqGain2Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            peqQ2Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqQ2Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 36, 16);
+            const int pw = (r.getWidth() - spacing * 2) / 3;
+            peqFreq2Slider.setBounds(r.removeFromLeft(pw)); r.removeFromLeft(spacing);
+            peqGain2Slider.setBounds(r.removeFromLeft(pw)); r.removeFromLeft(spacing);
+            peqQ2Slider.setBounds(r);
+        }
+        fxStrips.removeFromTop(sGap);
+        {
+            auto r = fxStrips.removeFromTop(stripH);
+            r.removeFromLeft(toggleW + spacing);
+            peqFreq3Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqFreq3Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 16);
+            peqGain3Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqGain3Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 16);
+            peqQ3Slider.setSliderStyle(juce::Slider::LinearHorizontal);
+            peqQ3Slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 36, 16);
+            const int pw = (r.getWidth() - spacing * 2) / 3;
+            peqFreq3Slider.setBounds(r.removeFromLeft(pw)); r.removeFromLeft(spacing);
+            peqGain3Slider.setBounds(r.removeFromLeft(pw)); r.removeFromLeft(spacing);
+            peqQ3Slider.setBounds(r);
+        }
     }
 
     // ─── TOOLS TAB ────────────────────────────────────────────────────
     else // currentTab == UiTab::tools
     {
-        auto T = contentArea;
+        auto T = contentArea.reduced(P(6, 2), P(4, 2));
+        const int rowGap = P(7, 4);
+        const int sectionGap = P(10, 6);
+        const int colGap = P(14, 8);
 
-        // Row 1: Snapshots + undo/redo
+        const int leftW = juce::jmax(P(470, 300), static_cast<int>(T.getWidth() * 0.58f));
+        auto left = T.removeFromLeft(juce::jmin(leftW, T.getWidth() - P(220, 160)));
+        T.removeFromLeft(colGap);
+        auto right = T;
+
+        // Left column: performance/tools controls
         {
-            auto r = T.removeFromTop(bH);
-            captureAButton.setBounds  (r.removeFromLeft(P(88)));  r.removeFromLeft(P(6,3));
-            captureBButton.setBounds  (r.removeFromLeft(P(88)));  r.removeFromLeft(P(6,3));
-            compareABToggle.setBounds (r.removeFromLeft(P(96)));  r.removeFromLeft(P(6,3));
-            undoButton.setBounds      (r.removeFromLeft(P(76)));  r.removeFromLeft(P(6,3));
+            auto r = left.removeFromTop(bH);
+            captureAButton.setBounds  (r.removeFromLeft(P(88)));  r.removeFromLeft(P(6, 3));
+            captureBButton.setBounds  (r.removeFromLeft(P(88)));  r.removeFromLeft(P(6, 3));
+            compareABToggle.setBounds (r.removeFromLeft(P(96)));  r.removeFromLeft(P(6, 3));
+            undoButton.setBounds      (r.removeFromLeft(P(76)));  r.removeFromLeft(P(6, 3));
             redoButton.setBounds      (r.removeFromLeft(P(76)));
         }
-        T.removeFromTop(7);
+        left.removeFromTop(rowGap);
 
-        // Row 2: MIDI
         {
-            auto r = T.removeFromTop(bH);
-            midiParamCombo.setBounds (r.removeFromLeft(P(168))); r.removeFromLeft(P(8,4));
-            midiLearnButton.setBounds(r.removeFromLeft(P(110)));
+            auto r = left.removeFromTop(bH);
+            midiParamCombo.setBounds (r.removeFromLeft(P(178))); r.removeFromLeft(P(8, 4));
+            midiLearnButton.setBounds(r.removeFromLeft(P(118)));
         }
-        T.removeFromTop(7);
+        left.removeFromTop(rowGap);
 
-        // Row 3: Background + NAM file controls
         {
-            auto r = T.removeFromTop(bH);
-            loadBackgroundButton.setBounds (r.removeFromLeft(P(130))); r.removeFromLeft(P(6,3));
-            clearBackgroundButton.setBounds(r.removeFromLeft(P(130))); r.removeFromLeft(P(6,3));
-            loadNamButton.setBounds  (r.removeFromLeft(P(108))); r.removeFromLeft(P(6,3));
-            clearNamButton.setBounds (r.removeFromLeft(P(108)));
+            auto r = left.removeFromTop(bH);
+            loadBackgroundButton.setBounds (r.removeFromLeft(P(138))); r.removeFromLeft(P(6, 3));
+            clearBackgroundButton.setBounds(r.removeFromLeft(P(138))); r.removeFromLeft(P(6, 3));
+            loadNamButton.setBounds        (r.removeFromLeft(P(116))); r.removeFromLeft(P(6, 3));
+            clearNamButton.setBounds       (r.removeFromLeft(P(116)));
         }
-        T.removeFromTop(7);
+        left.removeFromTop(sectionGap);
 
-        // Row 4: Metal + Pitch + Tight
         {
-            auto r = T.removeFromTop(bH2);
-            metalModeToggle.setBounds  (r.removeFromLeft(P(100))); r.removeFromLeft(P(8,4));
+            auto r = left.removeFromTop(bH2);
+            metalModeToggle.setBounds  (r.removeFromLeft(P(102))); r.removeFromLeft(P(8, 4));
             pitchShiftLabel.setBounds  (r.removeFromLeft(P(45)));
-            pitchShiftSlider.setBounds (r.removeFromLeft(P(118))); r.removeFromLeft(P(10,5));
+            pitchShiftSlider.setBounds (r.removeFromLeft(P(122))); r.removeFromLeft(P(10, 5));
             tightLowCutLabel.setBounds (r.removeFromLeft(P(58)));
-            tightLowCutSlider.setBounds(r.removeFromLeft(P(118)));
+            tightLowCutSlider.setBounds(r.removeFromLeft(P(122)));
         }
-        T.removeFromTop(5);
+        left.removeFromTop(rowGap);
 
-        // Row 5: Wah
         {
-            auto r = T.removeFromTop(bH2);
-            wahEnableToggle.setBounds (r.removeFromLeft(P(68)));  r.removeFromLeft(P(6,3));
-            wahAutoToggle.setBounds   (r.removeFromLeft(P(84)));  r.removeFromLeft(P(8,4));
+            auto r = left.removeFromTop(bH2);
+            wahEnableToggle.setBounds (r.removeFromLeft(P(70)));  r.removeFromLeft(P(6, 3));
+            wahAutoToggle.setBounds   (r.removeFromLeft(P(86)));  r.removeFromLeft(P(8, 4));
             wahCenterLabel.setBounds  (r.removeFromLeft(P(52)));
-            wahCenterSlider.setBounds (r.removeFromLeft(P(114))); r.removeFromLeft(P(10,5));
+            wahCenterSlider.setBounds (r.removeFromLeft(P(118))); r.removeFromLeft(P(10, 5));
             wahDepthLabel.setBounds   (r.removeFromLeft(P(56)));
-            wahDepthSlider.setBounds  (r.removeFromLeft(P(114)));
+            wahDepthSlider.setBounds  (r.removeFromLeft(P(118)));
         }
-        T.removeFromTop(5);
+        left.removeFromTop(rowGap);
 
-        // Row 6: Kill switch
         {
-            auto r = T.removeFromTop(bH2);
-            killSwitchToggle.setBounds(r.removeFromLeft(P(90)));  r.removeFromLeft(P(8,4));
+            auto r = left.removeFromTop(bH2);
+            killSwitchToggle.setBounds(r.removeFromLeft(P(92)));  r.removeFromLeft(P(8, 4));
             killRateLabel.setBounds   (r.removeFromLeft(P(56)));
-            killRateCombo.setBounds   (r.removeFromLeft(P(88)));  r.removeFromLeft(P(8,4));
+            killRateCombo.setBounds   (r.removeFromLeft(P(90)));  r.removeFromLeft(P(8, 4));
             killDepthLabel.setBounds  (r.removeFromLeft(P(58)));
-            killDepthSlider.setBounds (r.removeFromLeft(P(118)));
+            killDepthSlider.setBounds (r.removeFromLeft(P(122)));
         }
-        T.removeFromTop(7);
+        left.removeFromTop(sectionGap);
 
-        // NAM
-        namBypassToggle.setBounds   (T.removeFromTop(bH2)); T.removeFromTop(4);
-        namAutoMatchToggle.setBounds(T.removeFromTop(bH2)); T.removeFromTop(4);
+        namBypassToggle.setBounds   (left.removeFromTop(bH2)); left.removeFromTop(P(4, 2));
+        namAutoMatchToggle.setBounds(left.removeFromTop(bH2)); left.removeFromTop(P(4, 2));
         {
-            auto r = T.removeFromTop(bH2);
+            auto r = left.removeFromTop(bH2);
             namBlendLabel.setBounds (r.removeFromLeft(P(80)));
-            namBlendSlider.setBounds(r.removeFromLeft(P(200)));
+            namBlendSlider.setBounds(r);
         }
-        T.removeFromTop(8);
+        left.removeFromTop(sectionGap);
 
-        // I/O
         {
-            auto r = T.removeFromTop(bH2);
-            inputTrimLabel.setBounds    (r.removeFromLeft(P(68)));
-            inputTrimSlider.setBounds   (r.removeFromLeft(P(140))); r.removeFromLeft(P(10,5));
-            limiterEnabledToggle.setBounds(r.removeFromLeft(P(80))); r.removeFromLeft(P(6,3));
-            limiterClipLabel.setBounds  (r.removeFromLeft(38));      r.removeFromLeft(P(4,2));
-            limiterThreshLabel.setBounds(r.removeFromLeft(P(76)));
-            limiterThreshSlider.setBounds(r.removeFromLeft(P(120)));
+            auto r = left.removeFromTop(bH2);
+            inputTrimLabel.setBounds      (r.removeFromLeft(P(68)));
+            inputTrimSlider.setBounds     (r.removeFromLeft(P(140))); r.removeFromLeft(P(10, 5));
+            limiterEnabledToggle.setBounds(r.removeFromLeft(P(80)));  r.removeFromLeft(P(6, 3));
+            limiterClipLabel.setBounds    (r.removeFromLeft(38));      r.removeFromLeft(P(4, 2));
+            limiterThreshLabel.setBounds  (r.removeFromLeft(P(76)));
+            limiterThreshSlider.setBounds (r);
         }
-        T.removeFromTop(8);
+        left.removeFromTop(sectionGap);
 
-        // Spectrum + Preset browser
-        spectrumAnalyzer->setBounds(T.removeFromTop(juce::jmax(52, static_cast<int>(H / 9.0f))));
-        T.removeFromTop(6);
-        presetBrowserLabel.setBounds(T.removeFromTop(20));
-        T.removeFromTop(4);
+        // Metronome row
         {
-            const int listH = juce::jmax(72, static_cast<int>(H / 7.0f));
-            auto la = T.removeFromTop(listH);
-            loadFactoryPresetButton.setBounds(la.removeFromBottom(bH));
-            presetListBox.setBounds(la);
+            auto r = left.removeFromTop(bH2);
+            metroEnableToggle.setBounds(r.removeFromLeft(P(70))); r.removeFromLeft(P(6, 3));
+            metroSyncToggle.setBounds(r.removeFromLeft(P(92))); r.removeFromLeft(P(6, 3));
+            tapTempoButton.setBounds(r.removeFromLeft(P(84))); r.removeFromLeft(P(8, 4));
+            metroBpmSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            metroBpmSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 56, 18);
+            metroBpmLabel.setBounds(r.removeFromLeft(P(32)));
+            metroBpmSlider.setBounds(r.removeFromLeft(P(118))); r.removeFromLeft(P(8, 4));
+            metroLevelSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+            metroLevelSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 48, 18);
+            metroLevelLabel.setBounds(r.removeFromLeft(P(36)));
+            metroLevelSlider.setBounds(r.removeFromLeft(P(96))); r.removeFromLeft(P(8, 4));
+            metroTimeSigLabel.setBounds(r.removeFromLeft(P(42)));
+            metroTimeSigCombo.setBounds(r.removeFromLeft(P(68)));
         }
-        T.removeFromTop(6);
+        left.removeFromTop(rowGap);
 
-        // Status labels
-        midiMapStatusLabel.setBounds    (T.removeFromTop(bH2)); T.removeFromTop(4);
-        backgroundStatusLabel.setBounds (T.removeFromTop(bH2)); T.removeFromTop(4);
-        namStatusLabel.setBounds        (T.removeFromTop(bH2)); T.removeFromTop(4);
-        namMatchLabel.setBounds         (T.removeFromTop(bH2));
+        // Looper row
+        {
+            auto r = left.removeFromTop(bH);
+            const int lbW = P(52);
+            looperRecordButton.setBounds(r.removeFromLeft(lbW)); r.removeFromLeft(P(4, 2));
+            looperPlayButton.setBounds(r.removeFromLeft(lbW)); r.removeFromLeft(P(4, 2));
+            looperStopButton.setBounds(r.removeFromLeft(lbW)); r.removeFromLeft(P(4, 2));
+            looperClearButton.setBounds(r.removeFromLeft(lbW)); r.removeFromLeft(P(8, 4));
+            looperStatusLabel.setBounds(r.removeFromLeft(P(58))); r.removeFromLeft(P(8, 4));
+            looperLevelLabel.setBounds(r.removeFromLeft(P(52)));
+            looperLevelSlider.setBounds(r);
+        }
+
+        // Right column: analysis + preset browser + statuses
+        const int statusRowH = juce::jmax(bH2, P(24, 18));
+        auto statusArea = right.removeFromBottom(statusRowH * 4 + P(12, 8));
+        spectrumAnalyzer->setBounds(right.removeFromTop(juce::jmax(86, static_cast<int>(H / 5.5f))));
+        right.removeFromTop(P(8, 5));
+        presetBrowserLabel.setBounds(right.removeFromTop(P(22, 18)));
+        right.removeFromTop(P(4, 2));
+        {
+            auto listArea = right;
+            loadFactoryPresetButton.setBounds(listArea.removeFromBottom(bH));
+            listArea.removeFromBottom(P(4, 2));
+            presetListBox.setBounds(listArea);
+        }
+
+        midiMapStatusLabel.setBounds    (statusArea.removeFromTop(statusRowH)); statusArea.removeFromTop(P(4, 2));
+        backgroundStatusLabel.setBounds (statusArea.removeFromTop(statusRowH)); statusArea.removeFromTop(P(4, 2));
+        namStatusLabel.setBounds        (statusArea.removeFromTop(statusRowH)); statusArea.removeFromTop(P(4, 2));
+        namMatchLabel.setBounds         (statusArea.removeFromTop(statusRowH));
     }
 }
 
@@ -1165,16 +1622,17 @@ void VayuAudioProcessorEditor::refreshToolsStatus()
     const auto namPath = audioProcessor.getNamModelPath();
     const bool namBypassed = namBypassToggle.getToggleState();
     const bool namAutoMatch = namAutoMatchToggle.getToggleState();
-    if (namPath.isNotEmpty())
-        namStatusLabel.setText(namBypassed
-                                   ? "NAM: Bypassed (" + juce::File(namPath).getFileName() + ")"
-                                   : "NAM: " + juce::File(namPath).getFileName() + (namAutoMatch ? " [Match]" : "")
-                                       + " [Blend " + juce::String(juce::roundToInt(namBlendSlider.getValue() * 100.0)) + "%]",
-                               juce::dontSendNotification);
-    else
-        namStatusLabel.setText("NAM: Off", juce::dontSendNotification);
+    auto namStatus = audioProcessor.getNamStatusText();
+    if (audioProcessor.isNamLoaded())
+    {
+        namStatus = namBypassed
+            ? "NAM: Bypassed (" + juce::File(namPath).getFileName() + ")"
+            : "NAM: " + juce::File(namPath).getFileName() + (namAutoMatch ? " [Match]" : "")
+                + " [Blend " + juce::String(juce::roundToInt(namBlendSlider.getValue() * 100.0)) + "%]";
+    }
+    namStatusLabel.setText(namStatus, juce::dontSendNotification);
 
-    if (namPath.isNotEmpty() && namAutoMatch && !namBypassed)
+    if (audioProcessor.isNamLoaded() && namAutoMatch && !namBypassed)
     {
         const auto matchDb = audioProcessor.getNamMatchGainDb();
         const juce::String sign = matchDb >= 0.0f ? "+" : "";
@@ -1439,6 +1897,60 @@ void VayuAudioProcessorEditor::updateTabVisibility()
     delaySyncToggle.setVisible(showFx);
     delayDivisionLabel.setVisible(showFx);
     delayDivisionCombo.setVisible(showFx);
+
+    // New effects on FX tab
+    distEnableToggle.setVisible(showFx);
+    distModeCombo.setVisible(showFx); distModeLabel.setVisible(showFx);
+    distGainSlider.setVisible(showFx); distGainLabel.setVisible(showFx);
+    distDriveSlider.setVisible(showFx); distDriveLabel.setVisible(showFx);
+    distToneSlider.setVisible(showFx); distToneLabel.setVisible(showFx);
+    distMixSlider.setVisible(showFx); distMixLabel.setVisible(showFx);
+    distOutputSlider.setVisible(showFx); distOutputLabel.setVisible(showFx);
+    distTightSlider.setVisible(showFx); distTightLabel.setVisible(showFx);
+    distHiCutSlider.setVisible(showFx); distHiCutLabel.setVisible(showFx);
+    distPresenceSlider.setVisible(showFx); distPresenceLabel.setVisible(showFx);
+    distGateSlider.setVisible(showFx); distGateLabel.setVisible(showFx);
+
+    compEnableToggle.setVisible(showFx);
+    compThreshSlider.setVisible(showFx); compThreshLabel.setVisible(showFx);
+    compRatioSlider.setVisible(showFx); compRatioLabel.setVisible(showFx);
+    compAttackSlider.setVisible(showFx); compAttackLabel.setVisible(showFx);
+    compReleaseSlider.setVisible(showFx); compReleaseLabel.setVisible(showFx);
+    compMakeupSlider.setVisible(showFx); compMakeupLabel.setVisible(showFx);
+    compMixSlider.setVisible(showFx); compMixLabel.setVisible(showFx);
+
+    chorusEnableToggle.setVisible(showFx);
+    chorusRateSlider.setVisible(showFx); chorusRateLabel.setVisible(showFx);
+    chorusDepthSlider.setVisible(showFx); chorusDepthLabel.setVisible(showFx);
+    chorusMixSlider.setVisible(showFx); chorusMixLabel.setVisible(showFx);
+
+    phaserEnableToggle.setVisible(showFx);
+    phaserRateSlider.setVisible(showFx); phaserRateLabel.setVisible(showFx);
+    phaserDepthSlider.setVisible(showFx); phaserDepthLabel.setVisible(showFx);
+    phaserFeedbackSlider.setVisible(showFx); phaserFeedbackLabel.setVisible(showFx);
+    phaserMixSlider.setVisible(showFx); phaserMixLabel.setVisible(showFx);
+
+    flangerEnableToggle.setVisible(showFx);
+    flangerRateSlider.setVisible(showFx); flangerRateLabel.setVisible(showFx);
+    flangerDepthSlider.setVisible(showFx); flangerDepthLabel.setVisible(showFx);
+    flangerFeedbackSlider.setVisible(showFx); flangerFeedbackLabel.setVisible(showFx);
+    flangerMixSlider.setVisible(showFx); flangerMixLabel.setVisible(showFx);
+
+    tremoloEnableToggle.setVisible(showFx);
+    tremoloRateSlider.setVisible(showFx); tremoloRateLabel.setVisible(showFx);
+    tremoloDepthSlider.setVisible(showFx); tremoloDepthLabel.setVisible(showFx);
+    tremoloSyncToggle.setVisible(showFx);
+    tremoloShapeLabel.setVisible(showFx); tremoloShapeCombo.setVisible(showFx);
+    tremoloDivisionLabel.setVisible(showFx); tremoloDivisionCombo.setVisible(showFx);
+
+    peqEnableToggle.setVisible(showFx);
+    peqFreq1Slider.setVisible(showFx); peqGain1Slider.setVisible(showFx); peqQ1Slider.setVisible(showFx);
+    peqFreq1Label.setVisible(showFx); peqGain1Label.setVisible(showFx); peqQ1Label.setVisible(showFx);
+    peqFreq2Slider.setVisible(showFx); peqGain2Slider.setVisible(showFx); peqQ2Slider.setVisible(showFx);
+    peqFreq2Label.setVisible(showFx); peqGain2Label.setVisible(showFx); peqQ2Label.setVisible(showFx);
+    peqFreq3Slider.setVisible(showFx); peqGain3Slider.setVisible(showFx); peqQ3Slider.setVisible(showFx);
+    peqFreq3Label.setVisible(showFx); peqGain3Label.setVisible(showFx); peqQ3Label.setVisible(showFx);
+
     limiterClipLabel.setVisible(showTools);
 
     savePresetButton.setVisible(showTools);
@@ -1488,6 +2000,21 @@ void VayuAudioProcessorEditor::updateTabVisibility()
     loadFactoryPresetButton.setVisible(showTools);
     spectrumAnalyzer->setVisible(showTools);
 
+    // Metronome + Looper on Tools tab
+    metroEnableToggle.setVisible(showTools);
+    metroSyncToggle.setVisible(showTools);
+    tapTempoButton.setVisible(showTools);
+    metroBpmSlider.setVisible(showTools); metroBpmLabel.setVisible(showTools);
+    metroLevelSlider.setVisible(showTools); metroLevelLabel.setVisible(showTools);
+    metroTimeSigLabel.setVisible(showTools); metroTimeSigCombo.setVisible(showTools);
+    looperRecordButton.setVisible(showTools);
+    looperPlayButton.setVisible(showTools);
+    looperStopButton.setVisible(showTools);
+    looperClearButton.setVisible(showTools);
+    looperLevelSlider.setVisible(showTools);
+    looperLevelLabel.setVisible(showTools);
+    looperStatusLabel.setVisible(showTools);
+
     // Tabs: active tab has a slightly brighter tint; the cyan underline
     // is drawn by paint() so we only need the background color here.
     const auto tabOnBg   = juce::Colour(0xff1e2530);
@@ -1516,6 +2043,16 @@ void VayuAudioProcessorEditor::timerCallback()
     const bool limiterOn = audioProcessor.limiterActive.load();
     limiterClipLabel.setText(limiterOn ? "CLIP" : "", juce::dontSendNotification);
     limiterClipLabel.setColour(juce::Label::textColourId, limiterOn ? juce::Colours::red : juce::Colours::transparentBlack);
+
+    // Looper status
+    if (audioProcessor.isLooperRecording())
+        looperStatusLabel.setText("REC", juce::dontSendNotification);
+    else if (audioProcessor.isLooperPlaying())
+        looperStatusLabel.setText("PLAY", juce::dontSendNotification);
+    else if (audioProcessor.getLooperLengthSamples() > 0)
+        looperStatusLabel.setText("READY", juce::dontSendNotification);
+    else
+        looperStatusLabel.setText("EMPTY", juce::dontSendNotification);
     
     repaint(inputMeterBounds.getUnion(outputMeterBounds).getUnion(correlationMeterBounds));
     repaint(getLocalBounds().removeFromTop(56));

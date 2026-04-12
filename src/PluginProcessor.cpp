@@ -6,8 +6,35 @@
 #include <limits>
 #include <memory>
 
+#if VAYU_HAS_NAM
+#include "NAM/model_config.h"
+#include "NAM/container.h"
+#include "NAM/convnet.h"
+#include "NAM/dsp.h"
+#include "NAM/lstm.h"
+#include "NAM/wavenet.h"
+#endif
+
 namespace
 {
+#if VAYU_HAS_NAM
+void ensureNamConfigParsersRegistered()
+{
+    auto& registry = nam::ConfigParserRegistry::instance();
+
+    if (!registry.has("Linear"))
+        registry.registerParser("Linear", nam::linear::create_config);
+    if (!registry.has("LSTM"))
+        registry.registerParser("LSTM", nam::lstm::create_config);
+    if (!registry.has("ConvNet"))
+        registry.registerParser("ConvNet", nam::convnet::create_config);
+    if (!registry.has("WaveNet"))
+        registry.registerParser("WaveNet", nam::wavenet::create_config);
+    if (!registry.has("Container"))
+        registry.registerParser("Container", nam::container::create_config);
+}
+#endif
+
 const char* kNoteNames[12] =
 {
     "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
@@ -22,6 +49,77 @@ float getBufferPeak (const juce::AudioBuffer<float>& buffer, int startChannel, i
 
     return peak;
 }
+const std::vector<VayuAudioProcessor::MidiLearnTarget>& getStaticMidiLearnTargets()
+{
+    static const std::vector<VayuAudioProcessor::MidiLearnTarget> targets
+    {
+        { "Drive", "drive", "cc_drive" },
+        { "Output", "outputVolume", "cc_output" },
+        { "Gate", "gateThreshold", "cc_gate" },
+        { "Boost", "boostDb", "cc_boost" },
+        { "Delay Mix", "delayMix", "cc_delayMix" },
+        { "Reverb Mix", "reverbMix", "cc_reverbMix" },
+        { "Cab Blend", "cabBlend", "cc_cabBlend" },
+        { "Cab Pan", "cabPan", "cc_cabPan" },
+        { "Cab A Level", "cabLevelA", "cc_cabLevelA" },
+        { "Cab B Level", "cabLevelB", "cc_cabLevelB" },
+        { "Delay Feedback", "delayFeedback", "cc_delayFeedback" },
+        { "Delay Time", "delayTimeMs", "cc_delayTimeMs" },
+        { "Reverb Room", "reverbRoomSize", "cc_reverbRoomSize" },
+        { "Reverb Damping", "reverbDamping", "cc_reverbDamping" },
+        { "Bass", "ampBassDb", "cc_bass" },
+        { "Mid", "ampMidDb", "cc_mid" },
+        { "Treble", "ampTrebleDb", "cc_treble" },
+        { "Presence", "ampPresenceDb", "cc_presence" },
+        { "Pitch", "pitchShiftSemi", "cc_pitch" },
+        { "Tight Cut", "tightLowCutHz", "cc_tight" },
+        { "Wah Freq", "wahCenterHz", "cc_wahFreq" },
+        { "Wah Depth", "wahDepth", "cc_wahDepth" },
+        { "Kill Depth", "killDepth", "cc_killDepth" },
+        { "NAM Blend", "namBlend", "cc_namBlend" },
+        { "Input Trim", "inputTrimDb", "cc_inputTrim" },
+        { "Dist On", "distEnable", "cc_distEnable" },
+        { "Dist Gain", "distGainDb", "cc_distGain" },
+        { "Dist Drive", "distDrive", "cc_distDrive" },
+        { "Dist Tone", "distTone", "cc_distTone" },
+        { "Dist Mix", "distMix", "cc_distMix" },
+        { "Dist Out", "distOutputDb", "cc_distOut" },
+        { "Dist Mode", "distMode", "cc_distMode" },
+        { "Dist LowCut", "distTightHz", "cc_distTight" },
+        { "Dist HiCut", "distHiCutHz", "cc_distHiCut" },
+        { "Dist Presence", "distPresenceDb", "cc_distPresence" },
+        { "Dist Gate", "distGateDb", "cc_distGate" },
+        { "Comp On", "compEnable", "cc_compEnable" },
+        { "Comp Thresh", "compThreshDb", "cc_compThresh" },
+        { "Comp Ratio", "compRatio", "cc_compRatio" },
+        { "Comp Mix", "compMix", "cc_compMix" },
+        { "Chorus On", "chorusEnable", "cc_chorusEnable" },
+        { "Chorus Rate", "chorusRate", "cc_chorusRate" },
+        { "Chorus Depth", "chorusDepth", "cc_chorusDepth" },
+        { "Chorus Mix", "chorusMix", "cc_chorusMix" },
+        { "Phaser On", "phaserEnable", "cc_phaserEnable" },
+        { "Phaser Rate", "phaserRate", "cc_phaserRate" },
+        { "Phaser Depth", "phaserDepth", "cc_phaserDepth" },
+        { "Phaser Mix", "phaserMix", "cc_phaserMix" },
+        { "Flanger On", "flangerEnable", "cc_flangerEnable" },
+        { "Flanger Rate", "flangerRate", "cc_flangerRate" },
+        { "Flanger Depth", "flangerDepth", "cc_flangerDepth" },
+        { "Flanger Mix", "flangerMix", "cc_flangerMix" },
+        { "Tremolo On", "tremoloEnable", "cc_tremoloEnable" },
+        { "Tremolo Rate", "tremoloRate", "cc_tremoloRate" },
+        { "Tremolo Depth", "tremoloDepth", "cc_tremoloDepth" },
+        { "PEQ On", "peqEnable", "cc_peqEnable" },
+        { "PEQ Low Gain", "peqBand1GainDb", "cc_peqGain1" },
+        { "PEQ Mid Gain", "peqBand2GainDb", "cc_peqGain2" },
+        { "PEQ High Gain", "peqBand3GainDb", "cc_peqGain3" },
+        { "Metro On", "metroEnable", "cc_metroEnable" },
+        { "Metro BPM", "metroBpm", "cc_metroBpm" },
+        { "Metro Level", "metroLevel", "cc_metroLevel" },
+        { "Looper Level", "looperLevel", "cc_looperLevel" }
+    };
+
+    return targets;
+}
 }
 
 VayuAudioProcessor::VayuAudioProcessor()
@@ -35,13 +133,24 @@ VayuAudioProcessor::VayuAudioProcessor()
       ),
     apvts(*this, &undoManager, "Parameters", createParameterLayout())
 {
-    midiCCMap.fill(-1);
+#if VAYU_HAS_NAM
+    ensureNamConfigParsersRegistered();
+    namStatusText = "NAM: Ready to load";
+#else
+    namStatusText = "NAM: Unavailable in this build";
+#endif
+    midiCCMap.assign(getMidiLearnTargets().size(), -1);
 }
 
 #if JUCE_MSVC
-#pragma warning(push)
 #pragma warning(disable: 4996)
 #endif
+
+const std::vector<VayuAudioProcessor::MidiLearnTarget>& VayuAudioProcessor::getMidiLearnTargets()
+{
+    return getStaticMidiLearnTargets();
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout VayuAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
@@ -477,6 +586,245 @@ juce::AudioProcessorValueTreeState::ParameterLayout VayuAudioProcessor::createPa
         [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; },
         [](const juce::String& text) { return text.trimCharactersAtEnd(" %").getFloatValue() / 100.0f; }));
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  DISTORTION (pre-NAM stomp)
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "distEnable", 1 }, "Distortion", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distGainDb", 1 }, "Dist Gain",
+        juce::NormalisableRange<float>(0.0f, 42.0f, 0.1f, 1.0f), 18.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " dB"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distDrive", 1 }, "Dist Drive",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.82f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distTone", 1 }, "Dist Tone",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.55f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distMix", 1 }, "Dist Mix",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 1.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distOutputDb", 1 }, "Dist Output",
+        juce::NormalisableRange<float>(-24.0f, 12.0f, 0.1f, 1.0f), 0.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " dB"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "distMode", 1 }, "Dist Mode",
+        juce::StringArray { "Tight", "Brutal", "Fuzz", "Insane" },
+        1));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distTightHz", 1 }, "Dist Low Cut",
+        juce::NormalisableRange<float>(60.0f, 320.0f, 1.0f, 0.45f), 140.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 0) + " Hz"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distHiCutHz", 1 }, "Dist Hi Cut",
+        juce::NormalisableRange<float>(2500.0f, 12000.0f, 10.0f, 0.4f), 6500.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 0) + " Hz"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distPresenceDb", 1 }, "Dist Presence",
+        juce::NormalisableRange<float>(-12.0f, 12.0f, 0.1f, 1.0f), 2.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " dB"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "distGateDb", 1 }, "Dist Gate",
+        juce::NormalisableRange<float>(-80.0f, -30.0f, 0.1f, 1.0f), -58.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " dB"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  COMPRESSOR (pre-amp)
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "compEnable", 1 }, "Compressor", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "compThreshDb", 1 }, "Comp Threshold",
+        juce::NormalisableRange<float>(-40.0f, 0.0f, 0.1f, 1.0f), -18.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " dB"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "compRatio", 1 }, "Comp Ratio",
+        juce::NormalisableRange<float>(1.0f, 20.0f, 0.1f, 0.5f), 4.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + ":1"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(":1").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "compAttackMs", 1 }, "Comp Attack",
+        juce::NormalisableRange<float>(0.1f, 100.0f, 0.1f, 0.4f), 10.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " ms"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" ms").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "compReleaseMs", 1 }, "Comp Release",
+        juce::NormalisableRange<float>(10.0f, 500.0f, 1.0f, 0.45f), 120.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 0) + " ms"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" ms").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "compMakeupDb", 1 }, "Comp Makeup",
+        juce::NormalisableRange<float>(0.0f, 24.0f, 0.1f, 1.0f), 0.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " dB"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "compMix", 1 }, "Comp Mix",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 1.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(juce::roundToInt(v * 100)) + " %"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" %").getFloatValue() / 100.0f; }));
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  CHORUS
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "chorusEnable", 1 }, "Chorus", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "chorusRate", 1 }, "Chorus Rate",
+        juce::NormalisableRange<float>(0.1f, 6.0f, 0.01f, 0.5f), 1.2f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 2) + " Hz"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "chorusDepth", 1 }, "Chorus Depth",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "chorusMix", 1 }, "Chorus Mix",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.5f));
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  PHASER
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "phaserEnable", 1 }, "Phaser", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "phaserRate", 1 }, "Phaser Rate",
+        juce::NormalisableRange<float>(0.05f, 5.0f, 0.01f, 0.5f), 0.5f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 2) + " Hz"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "phaserDepth", 1 }, "Phaser Depth",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.6f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "phaserFeedback", 1 }, "Phaser Feedback",
+        juce::NormalisableRange<float>(0.0f, 0.95f, 0.001f, 1.0f), 0.3f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "phaserMix", 1 }, "Phaser Mix",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.5f));
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  FLANGER
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "flangerEnable", 1 }, "Flanger", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "flangerRate", 1 }, "Flanger Rate",
+        juce::NormalisableRange<float>(0.05f, 5.0f, 0.01f, 0.5f), 0.3f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 2) + " Hz"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "flangerDepth", 1 }, "Flanger Depth",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "flangerFeedback", 1 }, "Flanger Feedback",
+        juce::NormalisableRange<float>(-0.95f, 0.95f, 0.001f, 1.0f), 0.3f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "flangerMix", 1 }, "Flanger Mix",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.5f));
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  TREMOLO
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "tremoloEnable", 1 }, "Tremolo", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "tremoloRate", 1 }, "Tremolo Rate",
+        juce::NormalisableRange<float>(0.5f, 12.0f, 0.01f, 0.5f), 4.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " Hz"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "tremoloDepth", 1 }, "Tremolo Depth",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f), 0.6f));
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "tremoloSync", 1 }, "Tremolo Sync", false));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "tremoloShape", 1 }, "Tremolo Shape",
+        juce::StringArray { "Sine", "Square", "Triangle" }, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "tremoloDivision", 1 }, "Tremolo Division",
+        juce::StringArray { "1/4", "1/8", "1/8D", "1/8T", "1/16" }, 1));
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  PARAMETRIC EQ (3-band)
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "peqEnable", 1 }, "Parametric EQ", false));
+    for (int b = 1; b <= 3; ++b)
+    {
+        auto id = [b](const char* suffix) { return juce::String("peqBand") + juce::String(b) + suffix; };
+        const float defFreq = (b == 1) ? 200.0f : (b == 2) ? 1000.0f : 4000.0f;
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { id("Freq"), 1 }, "PEQ " + juce::String(b) + " Freq",
+            juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.25f), defFreq,
+            juce::String(), juce::AudioProcessorParameter::genericParameter,
+            [](float v, int) { return (v >= 1000.0f) ? juce::String(v / 1000.0f, 1) + " kHz" : juce::String(v, 0) + " Hz"; },
+            [](const juce::String& t) { return t.contains("kHz") ? t.trimCharactersAtEnd(" kHz").getFloatValue() * 1000.0f : t.trimCharactersAtEnd(" Hz").getFloatValue(); }));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { id("GainDb"), 1 }, "PEQ " + juce::String(b) + " Gain",
+            juce::NormalisableRange<float>(-15.0f, 15.0f, 0.1f, 1.0f), 0.0f,
+            juce::String(), juce::AudioProcessorParameter::genericParameter,
+            [](float v, int) { return juce::String(v, 1) + " dB"; },
+            [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { id("Q"), 1 }, "PEQ " + juce::String(b) + " Q",
+            juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f, 0.5f), 1.0f));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  METRONOME
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "metroEnable", 1 }, "Metronome", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "metroSync", 1 }, "Metronome Sync", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "metroBpm", 1 }, "Metronome BPM",
+        juce::NormalisableRange<float>(30.0f, 300.0f, 0.1f, 1.0f), 120.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " BPM"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" BPM").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "metroLevel", 1 }, "Metronome Level",
+        juce::NormalisableRange<float>(-30.0f, 0.0f, 0.1f, 1.0f), -12.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " dB"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "metroTimeSig", 1 }, "Metronome Time Sig",
+        juce::StringArray { "4/4", "3/4", "6/8", "5/4", "7/8" }, 0));
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  LOOPER
+    // ═══════════════════════════════════════════════════════════════════
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "looperLevel", 1 }, "Looper Level",
+        juce::NormalisableRange<float>(-30.0f, 6.0f, 0.1f, 1.0f), 0.0f,
+        juce::String(), juce::AudioProcessorParameter::genericParameter,
+        [](float v, int) { return juce::String(v, 1) + " dB"; },
+        [](const juce::String& t) { return t.trimCharactersAtEnd(" dB").getFloatValue(); }));
+
     return layout;
 }
 #if JUCE_MSVC
@@ -838,22 +1186,13 @@ void VayuAudioProcessor::beginMidiLearnForParam(int paramIndex)
 
 juce::String VayuAudioProcessor::getMidiMappingDescription() const
 {
-    static constexpr const char* names[] =
-    {
-        "Drive", "Output", "Gate", "Boost", "Delay Mix", "Reverb Mix",
-        "Cab Blend", "Cab Pan", "Cab A Level", "Cab B Level",
-        "Delay Feedback", "Delay Time", "Reverb Room", "Reverb Damping",
-        "Bass", "Mid", "Treble", "Presence",
-        "Pitch", "Tight Cut", "Wah Freq", "Wah Depth",
-        "Kill Depth", "NAM Blend", "Input Trim"
-    };
-
+    const auto& targets = getMidiLearnTargets();
     juce::StringArray items;
     for (int i = 0; i < static_cast<int>(midiCCMap.size()); ++i)
     {
         const auto cc = midiCCMap[static_cast<size_t>(i)];
         if (cc >= 0)
-            items.add(juce::String(names[i]) + "=CC" + juce::String(cc));
+            items.add(juce::String(targets[static_cast<size_t>(i)].label) + "=CC" + juce::String(cc));
     }
 
     if (items.isEmpty())
@@ -869,7 +1208,9 @@ std::vector<VayuAudioProcessor::FactoryPreset> VayuAudioProcessor::getFactoryPre
     // --- Blues Clean ---
     presets.push_back({ "Blues Clean", "Clean",
         { {"drive",0.22f}, {"outputVolume",-3.0f}, {"gateThreshold",-60.0f},
+                    {"compEnable",1.0f}, {"compThreshDb",-22.0f}, {"compRatio",3.0f}, {"compMix",0.65f},
           {"boostDb",0.0f}, {"ampBassDb",3.0f}, {"ampMidDb",1.5f}, {"ampTrebleDb",-1.0f}, {"ampPresenceDb",2.0f},
+                    {"peqEnable",1.0f}, {"peqBand1GainDb",1.0f}, {"peqBand2GainDb",0.8f}, {"peqBand3GainDb",-0.6f},
           {"delayMix",0.12f}, {"delayTimeMs",380.0f}, {"reverbMix",0.18f},
           {"reverbRoomSize",0.4f}, {"reverbDamping",0.5f}, {"reverbWidth",0.9f}, {"reverbPreDelayMs",8.0f},
           {"oversamplingMode",1.0f}, {"ampType",0.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
@@ -878,6 +1219,7 @@ std::vector<VayuAudioProcessor::FactoryPreset> VayuAudioProcessor::getFactoryPre
     presets.push_back({ "British Crunch", "Crunch",
         { {"drive",0.55f}, {"outputVolume",-4.5f}, {"gateThreshold",-52.0f},
           {"boostDb",3.0f}, {"ampBassDb",2.0f}, {"ampMidDb",4.0f}, {"ampTrebleDb",2.0f}, {"ampPresenceDb",3.0f},
+                    {"compEnable",1.0f}, {"compThreshDb",-18.0f}, {"compRatio",2.2f}, {"compMix",0.45f},
           {"delayMix",0.08f}, {"delayTimeMs",500.0f}, {"reverbMix",0.1f},
           {"reverbRoomSize",0.35f}, {"reverbDamping",0.4f}, {"reverbWidth",0.8f}, {"reverbPreDelayMs",5.0f},
           {"oversamplingMode",1.0f}, {"ampType",1.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
@@ -887,6 +1229,7 @@ std::vector<VayuAudioProcessor::FactoryPreset> VayuAudioProcessor::getFactoryPre
         { {"drive",0.85f}, {"outputVolume",-6.0f}, {"gateThreshold",-42.0f},
           {"gateAttackMs",2.0f}, {"gateReleaseMs",80.0f}, {"gateHysteresisDb",6.0f}, {"gateRangeDb",-70.0f},
           {"boostDb",6.0f}, {"ampBassDb",5.0f}, {"ampMidDb",-2.0f}, {"ampTrebleDb",4.0f}, {"ampPresenceDb",5.0f},
+                    {"peqEnable",1.0f}, {"peqBand1Freq",110.0f}, {"peqBand1GainDb",1.5f}, {"peqBand2Freq",950.0f}, {"peqBand2GainDb",-2.0f}, {"peqBand3Freq",5600.0f}, {"peqBand3GainDb",2.2f},
           {"delayMix",0.0f}, {"reverbMix",0.05f},
           {"reverbRoomSize",0.3f}, {"reverbDamping",0.6f}, {"reverbWidth",1.0f}, {"reverbPreDelayMs",0.0f},
           {"oversamplingMode",2.0f}, {"ampType",2.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.5f} } });
@@ -895,6 +1238,8 @@ std::vector<VayuAudioProcessor::FactoryPreset> VayuAudioProcessor::getFactoryPre
     presets.push_back({ "Ambient Pad", "Clean",
         { {"drive",0.15f}, {"outputVolume",-5.0f}, {"gateThreshold",-65.0f},
           {"boostDb",0.0f}, {"ampBassDb",1.0f}, {"ampMidDb",-1.0f}, {"ampTrebleDb",0.0f}, {"ampPresenceDb",1.0f},
+                    {"chorusEnable",1.0f}, {"chorusRate",0.42f}, {"chorusDepth",0.72f}, {"chorusMix",0.52f},
+                    {"peqEnable",1.0f}, {"peqBand1GainDb",-0.8f}, {"peqBand2GainDb",1.5f}, {"peqBand3GainDb",2.5f},
           {"delayMix",0.35f}, {"delayTimeMs",600.0f}, {"delaySync",1.0f}, {"delayDivision",1.0f},
           {"reverbMix",0.55f}, {"reverbRoomSize",0.9f}, {"reverbDamping",0.2f}, {"reverbWidth",1.0f}, {"reverbPreDelayMs",25.0f},
           {"oversamplingMode",0.0f}, {"ampType",0.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
@@ -904,13 +1249,17 @@ std::vector<VayuAudioProcessor::FactoryPreset> VayuAudioProcessor::getFactoryPre
         { {"drive",0.78f}, {"outputVolume",-5.5f}, {"gateThreshold",-46.0f},
           {"gateAttackMs",1.5f}, {"gateReleaseMs",100.0f}, {"gateHysteresisDb",8.0f}, {"gateRangeDb",-80.0f},
           {"boostDb",4.5f}, {"ampBassDb",6.0f}, {"ampMidDb",-4.0f}, {"ampTrebleDb",5.0f}, {"ampPresenceDb",4.0f},
+                    {"compEnable",1.0f}, {"compThreshDb",-16.0f}, {"compRatio",2.5f}, {"compMix",0.25f},
+                    {"peqEnable",1.0f}, {"peqBand1GainDb",1.4f}, {"peqBand2GainDb",-3.0f}, {"peqBand3GainDb",1.6f},
           {"delayMix",0.0f}, {"reverbMix",0.0f},
           {"oversamplingMode",2.0f}, {"ampType",2.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
 
     // --- Vintage Jazz ---
     presets.push_back({ "Vintage Jazz", "Clean",
         { {"drive",0.18f}, {"outputVolume",-2.0f}, {"gateThreshold",-58.0f},
+                    {"compEnable",1.0f}, {"compThreshDb",-24.0f}, {"compRatio",2.0f}, {"compMix",0.55f},
           {"boostDb",0.0f}, {"ampBassDb",4.0f}, {"ampMidDb",3.0f}, {"ampTrebleDb",-3.0f}, {"ampPresenceDb",-1.0f},
+                    {"peqEnable",1.0f}, {"peqBand1GainDb",1.0f}, {"peqBand2GainDb",1.2f}, {"peqBand3GainDb",-1.5f},
           {"delayMix",0.0f}, {"reverbMix",0.22f},
           {"reverbRoomSize",0.5f}, {"reverbDamping",0.6f}, {"reverbWidth",0.7f}, {"reverbPreDelayMs",12.0f},
           {"oversamplingMode",0.0f}, {"ampType",0.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
@@ -919,9 +1268,36 @@ std::vector<VayuAudioProcessor::FactoryPreset> VayuAudioProcessor::getFactoryPre
     presets.push_back({ "Country Slap", "Crunch",
         { {"drive",0.42f}, {"outputVolume",-3.5f}, {"gateThreshold",-55.0f},
           {"boostDb",2.0f}, {"ampBassDb",1.0f}, {"ampMidDb",2.0f}, {"ampTrebleDb",3.0f}, {"ampPresenceDb",4.0f},
+                    {"compEnable",1.0f}, {"compThreshDb",-20.0f}, {"compRatio",3.5f}, {"compMix",0.72f},
           {"delayMix",0.18f}, {"delayTimeMs",250.0f}, {"reverbMix",0.12f},
           {"reverbRoomSize",0.35f}, {"reverbDamping",0.5f}, {"reverbWidth",0.85f}, {"reverbPreDelayMs",0.0f},
           {"oversamplingMode",1.0f}, {"ampType",1.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
+
+        presets.push_back({ "Liquid Chorus Lead", "Lead",
+                { {"drive",0.64f}, {"outputVolume",-4.0f}, {"gateThreshold",-50.0f},
+                    {"boostDb",3.0f}, {"ampBassDb",2.5f}, {"ampMidDb",3.8f}, {"ampTrebleDb",2.4f}, {"ampPresenceDb",3.2f},
+                    {"chorusEnable",1.0f}, {"chorusRate",0.75f}, {"chorusDepth",0.58f}, {"chorusMix",0.44f},
+                    {"delaySync",1.0f}, {"delayDivision",1.0f}, {"delayMix",0.20f}, {"delayFeedback",0.34f},
+                    {"reverbMix",0.18f}, {"ampType",1.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
+
+        presets.push_back({ "Phase Pulse Clean", "Clean",
+                { {"drive",0.20f}, {"outputVolume",-3.0f}, {"gateThreshold",-62.0f},
+                    {"ampBassDb",1.5f}, {"ampMidDb",0.5f}, {"ampTrebleDb",1.5f}, {"ampPresenceDb",1.0f},
+                    {"phaserEnable",1.0f}, {"phaserRate",0.32f}, {"phaserDepth",0.82f}, {"phaserMix",0.48f},
+                    {"tremoloEnable",1.0f}, {"tremoloSync",1.0f}, {"tremoloDivision",4.0f}, {"tremoloDepth",0.42f},
+                    {"reverbMix",0.22f}, {"ampType",0.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
+
+        presets.push_back({ "Jet Sweep Rhythm", "Crunch",
+                { {"drive",0.58f}, {"outputVolume",-4.4f}, {"gateThreshold",-53.0f},
+                    {"boostDb",2.0f}, {"ampBassDb",2.0f}, {"ampMidDb",1.0f}, {"ampTrebleDb",3.0f}, {"ampPresenceDb",2.0f},
+                    {"flangerEnable",1.0f}, {"flangerRate",0.22f}, {"flangerDepth",0.78f}, {"flangerFeedback",0.52f}, {"flangerMix",0.40f},
+                    {"delayMix",0.12f}, {"reverbMix",0.08f}, {"ampType",1.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
+
+        presets.push_back({ "Studio Sustain", "Utility",
+                { {"drive",0.28f}, {"outputVolume",-2.5f}, {"gateThreshold",-65.0f},
+                    {"compEnable",1.0f}, {"compThreshDb",-26.0f}, {"compRatio",4.5f}, {"compAttackMs",8.0f}, {"compReleaseMs",140.0f}, {"compMakeupDb",3.5f}, {"compMix",0.78f},
+                    {"peqEnable",1.0f}, {"peqBand1Freq",140.0f}, {"peqBand1GainDb",1.8f}, {"peqBand2Freq",1800.0f}, {"peqBand2GainDb",1.0f}, {"peqBand3Freq",6200.0f}, {"peqBand3GainDb",1.4f},
+                    {"ampType",0.0f}, {"limiterEnabled",1.0f}, {"limiterThreshDb",-0.3f} } });
 
     return presets;
 }
@@ -948,11 +1324,29 @@ void VayuAudioProcessor::loadNamModel(const juce::String& path)
     if (path.isEmpty())
         return;
 
+    // ── Defensive: register parsers right before loading ──────────────
+    ensureNamConfigParsersRegistered();
+
+    // Log parser state for diagnostics
+    {
+        auto& reg = nam::ConfigParserRegistry::instance();
+        juce::String info;
+        for (const char* arch : {"Linear", "LSTM", "ConvNet", "WaveNet", "Container"})
+            info += juce::String(arch) + (reg.has(arch) ? ":OK " : ":MISS ");
+        juce::Logger::writeToLog("NAM registry check: " + info);
+    }
+
     try
     {
+        juce::Logger::writeToLog("NAM loading: " + path);
         auto loaded = nam::get_dsp(std::filesystem::path(path.toStdString()));
         if (loaded == nullptr)
             throw std::runtime_error("NAM model load returned null DSP");
+
+        const int namIn = loaded->NumInputChannels();
+        const int namOut = loaded->NumOutputChannels();
+        juce::Logger::writeToLog("NAM model channels: in=" + juce::String(namIn)
+                                 + " out=" + juce::String(namOut));
 
         if (isPrepared && processSpec.sampleRate > 0.0 && processSpec.maximumBlockSize > 0)
             loaded->Reset(processSpec.sampleRate, static_cast<int>(processSpec.maximumBlockSize));
@@ -962,17 +1356,30 @@ void VayuAudioProcessor::loadNamModel(const juce::String& path)
 
         const juce::ScopedLock lock(stateLock);
         namModelPath = path;
+        namStatusText = "NAM: Loaded " + juce::File(path).getFileName()
+                        + " (" + juce::String(namIn) + "->" + juce::String(namOut) + ")";
+        juce::Logger::writeToLog(namStatusText);
     }
     catch (const std::exception& e)
     {
-        juce::Logger::writeToLog("NAM load failed: " + juce::String(e.what()));
+        std::atomic_store_explicit(&namEngine, std::shared_ptr<nam::DSP>{}, std::memory_order_release);
+        const juce::ScopedLock lock(stateLock);
+        namModelPath.clear();
+        namStatusText = "NAM load failed: " + juce::String(e.what());
+        juce::Logger::writeToLog(namStatusText);
     }
     catch (...)
     {
-        juce::Logger::writeToLog("NAM load failed: unknown exception");
+        std::atomic_store_explicit(&namEngine, std::shared_ptr<nam::DSP>{}, std::memory_order_release);
+        const juce::ScopedLock lock(stateLock);
+        namModelPath.clear();
+        namStatusText = "NAM load failed: unknown error";
+        juce::Logger::writeToLog(namStatusText);
     }
 #else
     juce::ignoreUnused(path);
+    const juce::ScopedLock lock(stateLock);
+    namStatusText = "NAM: Unavailable in this build";
     juce::Logger::writeToLog("NAM load requested, but NeuralAmpModelerCore headers are not available in this build.");
 #endif
 }
@@ -985,6 +1392,11 @@ void VayuAudioProcessor::clearNamModel()
     namMatchGainDb.store(0.0f);
     const juce::ScopedLock lock(stateLock);
     namModelPath.clear();
+#if VAYU_HAS_NAM
+    namStatusText = "NAM: Off";
+#else
+    namStatusText = "NAM: Unavailable in this build";
+#endif
 }
 
 juce::String VayuAudioProcessor::getNamModelPath() const
@@ -998,17 +1410,102 @@ float VayuAudioProcessor::getNamMatchGainDb() const
     return namMatchGainDb.load();
 }
 
+juce::String VayuAudioProcessor::getNamStatusText() const
+{
+    const juce::ScopedLock lock(stateLock);
+    return namStatusText;
+}
+
+bool VayuAudioProcessor::isNamAvailableInBuild() const
+{
+#if VAYU_HAS_NAM
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool VayuAudioProcessor::isNamLoaded() const
+{
+#if VAYU_HAS_NAM
+    return std::atomic_load_explicit(&namEngine, std::memory_order_acquire) != nullptr;
+#else
+    return false;
+#endif
+}
+
+double VayuAudioProcessor::resolveTempoBpm(double fallbackBpm) const
+{
+    if (auto* hostPlayHead = getPlayHead())
+    {
+        if (auto position = hostPlayHead->getPosition())
+        {
+            if (auto hostBpm = position->getBpm(); hostBpm.hasValue() && *hostBpm > 0.0)
+                return *hostBpm;
+        }
+    }
+
+    return fallbackBpm > 0.0 ? fallbackBpm : 120.0;
+}
+
+void VayuAudioProcessor::looperTrigger(LooperAction action)
+{
+    switch (action)
+    {
+        case LooperAction::Record:
+            if (looperState == LooperState::Playing)
+            {
+                looperState = LooperState::Overdubbing;
+            }
+            else
+            {
+                looperLength = 0;
+                looperWritePos = 0;
+                looperPlayPos = 0;
+                looperBuffer.clear();
+                looperState = LooperState::Recording;
+            }
+            break;
+        case LooperAction::Play:
+            if (looperLength > 0)
+            {
+                looperPlayPos = 0;
+                looperState = LooperState::Playing;
+            }
+            break;
+        case LooperAction::Stop:
+            if (looperState == LooperState::Recording)
+                looperLength = looperWritePos;
+            looperState = LooperState::Stopped;
+            break;
+        case LooperAction::Clear:
+            looperState = LooperState::Stopped;
+            looperLength = 0;
+            looperWritePos = 0;
+            looperPlayPos = 0;
+            looperBuffer.clear();
+            break;
+    }
+}
+
+bool VayuAudioProcessor::isLooperRecording() const
+{
+    return looperState == LooperState::Recording || looperState == LooperState::Overdubbing;
+}
+
+bool VayuAudioProcessor::isLooperPlaying() const
+{
+    return looperState == LooperState::Playing || looperState == LooperState::Overdubbing;
+}
+
+int VayuAudioProcessor::getLooperLengthSamples() const
+{
+    return looperLength;
+}
+
 void VayuAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMessages)
 {
-    static constexpr const char* parameterIds[] =
-    {
-        "drive", "outputVolume", "gateThreshold", "boostDb", "delayMix", "reverbMix",
-        "cabBlend", "cabPan", "cabLevelA", "cabLevelB",
-        "delayFeedback", "delayTimeMs", "reverbRoomSize", "reverbDamping",
-        "ampBassDb", "ampMidDb", "ampTrebleDb", "ampPresenceDb",
-        "pitchShiftSemi", "tightLowCutHz", "wahCenterHz", "wahDepth",
-        "killDepth", "namBlend", "inputTrimDb"
-    };
+    const auto& targets = getMidiLearnTargets();
 
     for (const auto metadata : midiMessages)
     {
@@ -1031,7 +1528,7 @@ void VayuAudioProcessor::handleMidiLearnAndMapping(juce::MidiBuffer& midiMessage
             if (midiCCMap[static_cast<size_t>(i)] != cc)
                 continue;
 
-            if (auto* param = apvts.getParameter(parameterIds[i]))
+            if (auto* param = apvts.getParameter(targets[static_cast<size_t>(i)].paramId))
                 param->setValueNotifyingHost(value01);
         }
     }
@@ -1140,6 +1637,52 @@ void VayuAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     gateGain = 1.0f;
     killLfoPhase = 0.0f;
     wahLfoPhase = 0.0f;
+
+    // New effects reset
+    compEnvelope = 0.0f;
+    distToneStateL = 0.0f;
+    distToneStateR = 0.0f;
+    distGateEnv = 0.0f;
+    distGateGain = 1.0f;
+    distGateOpen = true;
+
+    chorusDelayL.reset(); chorusDelayL.prepare(processSpec);
+    chorusDelayR.reset(); chorusDelayR.prepare(processSpec);
+    chorusDelayL.setMaximumDelayInSamples(4096);
+    chorusDelayR.setMaximumDelayInSamples(4096);
+    chorusLfoPhase = 0.0f;
+
+    flangerDelayL.reset(); flangerDelayL.prepare(processSpec);
+    flangerDelayR.reset(); flangerDelayR.prepare(processSpec);
+    flangerDelayL.setMaximumDelayInSamples(2048);
+    flangerDelayR.setMaximumDelayInSamples(2048);
+    flangerLfoPhase = 0.0f;
+    flangerFeedbackSampleL = 0.0f;
+    flangerFeedbackSampleR = 0.0f;
+
+    phaserLfoPhase = 0.0f;
+    phaserAPStateL.fill(0.0f);
+    phaserAPStateR.fill(0.0f);
+
+    tremoloLfoPhase = 0.0f;
+
+    peqL1.reset(); peqL2.reset(); peqL3.reset();
+    peqR1.reset(); peqR2.reset(); peqR3.reset();
+
+    metroPhase = 0.0f;
+    metroBeatCount = 0;
+    metroCurrentClickBeat = 0;
+    metroClickPhase = 0.0f;
+    metroClickOscPhase = 0.0f;
+    metroClickActive = false;
+    hostWasPlaying = false;
+
+    // Looper buffer: allocate up to 60 seconds stereo
+    looperBuffer.setSize(processingChannels, static_cast<int>(sampleRate * 60.0), false, true, false);
+    looperWritePos = 0;
+    looperPlayPos = 0;
+    looperLength = 0;
+    looperState = LooperState::Stopped;
 
     isPrepared = true;
 
@@ -1283,6 +1826,7 @@ bool VayuAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) cons
 void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+    const float sr = static_cast<float>(getSampleRate());
 
     handleMidiLearnAndMapping(midiMessages);
 
@@ -1363,7 +1907,107 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     const bool namBypass = apvts.getRawParameterValue("namBypass")->load() > 0.5f;
     const bool namAutoMatch = apvts.getRawParameterValue("namAutoMatch")->load() > 0.5f;
     const float namBlend = apvts.getRawParameterValue("namBlend")->load();
+    auto activeNamBlock = !namBypass ? std::atomic_load_explicit(&namEngine, std::memory_order_acquire) : std::shared_ptr<nam::DSP>{};
+    const bool namStageActive = activeNamBlock != nullptr;
 #endif
+
+    // New effect parameters
+    const bool compEnable = apvts.getRawParameterValue("compEnable")->load() > 0.5f;
+    const float compThreshDb = apvts.getRawParameterValue("compThreshDb")->load();
+    const float compRatio = apvts.getRawParameterValue("compRatio")->load();
+    const float compAttackMs = apvts.getRawParameterValue("compAttackMs")->load();
+    const float compReleaseMs = apvts.getRawParameterValue("compReleaseMs")->load();
+    const float compMakeupDb = apvts.getRawParameterValue("compMakeupDb")->load();
+    const float compMix = apvts.getRawParameterValue("compMix")->load();
+
+    const bool distEnable = apvts.getRawParameterValue("distEnable")->load() > 0.5f;
+    const float distGainDb = apvts.getRawParameterValue("distGainDb")->load();
+    const float distDrive = apvts.getRawParameterValue("distDrive")->load();
+    const float distTone = apvts.getRawParameterValue("distTone")->load();
+    const float distMix = apvts.getRawParameterValue("distMix")->load();
+    const float distOutputDb = apvts.getRawParameterValue("distOutputDb")->load();
+    const int distMode = static_cast<int>(apvts.getRawParameterValue("distMode")->load());
+    const float distTightHz = apvts.getRawParameterValue("distTightHz")->load();
+    const float distHiCutHz = apvts.getRawParameterValue("distHiCutHz")->load();
+    const float distPresenceDb = apvts.getRawParameterValue("distPresenceDb")->load();
+    const float distGateDb = apvts.getRawParameterValue("distGateDb")->load();
+
+    const bool chorusEnable = apvts.getRawParameterValue("chorusEnable")->load() > 0.5f;
+    const float chorusRate = apvts.getRawParameterValue("chorusRate")->load();
+    const float chorusDepthParam = apvts.getRawParameterValue("chorusDepth")->load();
+    const float chorusMix = apvts.getRawParameterValue("chorusMix")->load();
+
+    const bool phaserEnable = apvts.getRawParameterValue("phaserEnable")->load() > 0.5f;
+    const float phaserRate = apvts.getRawParameterValue("phaserRate")->load();
+    const float phaserDepthParam = apvts.getRawParameterValue("phaserDepth")->load();
+    const float phaserFeedbackParam = apvts.getRawParameterValue("phaserFeedback")->load();
+    const float phaserMix = apvts.getRawParameterValue("phaserMix")->load();
+
+    const bool flangerEnable = apvts.getRawParameterValue("flangerEnable")->load() > 0.5f;
+    const float flangerRate = apvts.getRawParameterValue("flangerRate")->load();
+    const float flangerDepthParam = apvts.getRawParameterValue("flangerDepth")->load();
+    const float flangerFeedbackParam = apvts.getRawParameterValue("flangerFeedback")->load();
+    const float flangerMix = apvts.getRawParameterValue("flangerMix")->load();
+
+    const bool tremoloEnable = apvts.getRawParameterValue("tremoloEnable")->load() > 0.5f;
+    const float tremoloRate = apvts.getRawParameterValue("tremoloRate")->load();
+    const float tremoloDepthParam = apvts.getRawParameterValue("tremoloDepth")->load();
+    const bool tremoloSync = apvts.getRawParameterValue("tremoloSync")->load() > 0.5f;
+    const int tremoloShape = static_cast<int>(apvts.getRawParameterValue("tremoloShape")->load());
+    const int tremoloDivision = static_cast<int>(apvts.getRawParameterValue("tremoloDivision")->load());
+
+    const bool peqEnable = apvts.getRawParameterValue("peqEnable")->load() > 0.5f;
+    const float peqFreq1 = apvts.getRawParameterValue("peqBand1Freq")->load();
+    const float peqGain1 = apvts.getRawParameterValue("peqBand1GainDb")->load();
+    const float peqQ1 = apvts.getRawParameterValue("peqBand1Q")->load();
+    const float peqFreq2 = apvts.getRawParameterValue("peqBand2Freq")->load();
+    const float peqGain2 = apvts.getRawParameterValue("peqBand2GainDb")->load();
+    const float peqQ2 = apvts.getRawParameterValue("peqBand2Q")->load();
+    const float peqFreq3 = apvts.getRawParameterValue("peqBand3Freq")->load();
+    const float peqGain3 = apvts.getRawParameterValue("peqBand3GainDb")->load();
+    const float peqQ3 = apvts.getRawParameterValue("peqBand3Q")->load();
+
+    const bool metroEnable = apvts.getRawParameterValue("metroEnable")->load() > 0.5f;
+    const bool metroSync = apvts.getRawParameterValue("metroSync")->load() > 0.5f;
+    const float metroBpm = apvts.getRawParameterValue("metroBpm")->load();
+    const float metroLevel = juce::Decibels::decibelsToGain(apvts.getRawParameterValue("metroLevel")->load());
+    const int metroTimeSig = static_cast<int>(apvts.getRawParameterValue("metroTimeSig")->load());
+    const float looperLevelGain = juce::Decibels::decibelsToGain(apvts.getRawParameterValue("looperLevel")->load());
+
+    const bool needsTempo = delaySync || killEnable || (tremoloEnable && tremoloSync) || (metroEnable && metroSync);
+    const bool needsTransportState = killEnable || metroSync;
+    const double resolvedTempoBpm = needsTempo ? resolveTempoBpm(static_cast<double>(metroBpm)) : static_cast<double>(metroBpm);
+
+    bool hostIsPlaying = true;
+    if (needsTransportState)
+    {
+        if (auto* hostPlayHead = getPlayHead())
+        {
+            if (auto position = hostPlayHead->getPosition())
+                hostIsPlaying = position->getIsPlaying();
+        }
+    }
+
+    if (!hostWasPlaying && hostIsPlaying)
+    {
+        // Realign synced modulators/click on transport start.
+        delayLfoPhase = 0.0f;
+        killLfoPhase = 0.0f;
+        tremoloLfoPhase = 0.0f;
+        metroPhase = 0.0f;
+        metroBeatCount = 0;
+        metroCurrentClickBeat = 0;
+        metroClickPhase = 0.0f;
+        metroClickOscPhase = 0.0f;
+        metroClickActive = false;
+    }
+
+    if (metroSync && !hostIsPlaying)
+    {
+        metroClickActive = false;
+        metroClickPhase = 0.0f;
+        metroClickOscPhase = 0.0f;
+    }
 
     const float outputGain = juce::Decibels::decibelsToGain(outputDb);
     const float gateThresholdLinear = juce::Decibels::decibelsToGain(gateThresholdDb);
@@ -1375,13 +2019,13 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     const float cabBGain = juce::Decibels::decibelsToGain(cabLevelB);
     const float cabAPolarity = cabFlipA ? -1.0f : 1.0f;
     const float cabBPolarity = cabFlipB ? -1.0f : 1.0f;
-    const float cabAlignDelaySamples = cabAlignDelayMs * 0.001f * static_cast<float>(getSampleRate());
+    const float cabAlignDelaySamples = cabAlignDelayMs * 0.001f * sr;
     const float delayFeedback  = apvts.getRawParameterValue("delayFeedback")->load();
     const float delayModRate   = apvts.getRawParameterValue("delayModRate")->load();
     const float delayModDepth  = apvts.getRawParameterValue("delayModDepth")->load();
-    const float delayModDepthSamples = delayModDepth * 0.001f * static_cast<float>(getSampleRate());
-    const float attackSamples = juce::jmax(1.0f, gateAttackMs * 0.001f * static_cast<float>(getSampleRate()));
-    const float releaseSamples = juce::jmax(1.0f, gateReleaseMs * 0.001f * static_cast<float>(getSampleRate()));
+    const float delayModDepthSamples = delayModDepth * 0.001f * sr;
+    const float attackSamples = juce::jmax(1.0f, gateAttackMs * 0.001f * sr);
+    const float releaseSamples = juce::jmax(1.0f, gateReleaseMs * 0.001f * sr);
     const float envAttackCoeff = std::exp(-1.0f / attackSamples);
     const float envReleaseCoeff = std::exp(-1.0f / releaseSamples);
     const float gateGainCoeff = envReleaseCoeff;
@@ -1421,7 +2065,8 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     const float wahCenter = wahAuto
         ? juce::jlimit(250.0f, 2200.0f, 350.0f + autoSweep * 1700.0f * juce::jlimit(0.0f, 1.0f, wahDepth))
         : wahCenterHz;
-    const auto wahCoeffs = juce::dsp::IIR::Coefficients<float>::makeBandPass(getSampleRate(), wahCenter, 0.42f);
+    const float wahQ = juce::jlimit(0.4f, 6.0f, 0.8f + wahDepth * 3.6f);
+    const auto wahCoeffs = juce::dsp::IIR::Coefficients<float>::makeBandPass(getSampleRate(), wahCenter, wahQ);
     wahFilterL.coefficients = wahCoeffs;
     wahFilterR.coefficients = wahCoeffs;
 
@@ -1433,19 +2078,66 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     float effectiveDelayMs = delayTimeMs;
     if (delaySync)
     {
-        double bpm = 120.0;
-        if (auto* hostPlayHead = getPlayHead())
-        {
-            if (auto position = hostPlayHead->getPosition())
-                if (auto hostBpm = position->getBpm(); hostBpm.hasValue() && *hostBpm > 0.0)
-                    bpm = *hostBpm;
-        }
-
         static constexpr float divisions[] = { 1.0f, 0.5f, 0.75f, 1.0f / 3.0f, 0.25f };
         const int divIndex = juce::jlimit(0, 4, delayDivision);
-        effectiveDelayMs = static_cast<float>(60000.0 / bpm) * divisions[divIndex];
+        effectiveDelayMs = static_cast<float>(60000.0 / resolvedTempoBpm) * divisions[divIndex];
     }
     // delaySamples used as base; actual setDelay is per-sample inside the LFO loop
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  COMPRESSOR (pre-amp, parallel mix)
+    // ═══════════════════════════════════════════════════════════════════
+    if (compEnable)
+    {
+        const float compThreshLin = juce::Decibels::decibelsToGain(compThreshDb);
+        const float compAttCoeff = std::exp(-1.0f / juce::jmax(1.0f, compAttackMs * 0.001f * static_cast<float>(getSampleRate())));
+        const float compRelCoeff = std::exp(-1.0f / juce::jmax(1.0f, compReleaseMs * 0.001f * static_cast<float>(getSampleRate())));
+        const float makeupGain = juce::Decibels::decibelsToGain(compMakeupDb);
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            // Peak detect across channels
+            float peak = 0.0f;
+            for (int ch = 0; ch < totalNumInputChannels; ++ch)
+                peak = juce::jmax(peak, std::abs(buffer.getSample(ch, sample)));
+
+            // Envelope follower
+            if (peak > compEnvelope)
+                compEnvelope = compAttCoeff * compEnvelope + (1.0f - compAttCoeff) * peak;
+            else
+                compEnvelope = compRelCoeff * compEnvelope + (1.0f - compRelCoeff) * peak;
+
+            // Gain computer
+            float gainReduction = 1.0f;
+            if (compEnvelope > compThreshLin && compEnvelope > 1e-10f)
+            {
+                const float envDb = juce::Decibels::gainToDecibels(compEnvelope);
+                const float overDb = envDb - compThreshDb;
+                const float compressedDb = overDb * (1.0f - 1.0f / compRatio);
+                gainReduction = juce::Decibels::decibelsToGain(-compressedDb);
+            }
+
+            for (int ch = 0; ch < totalNumInputChannels; ++ch)
+            {
+                const float dry = buffer.getSample(ch, sample);
+                const float wet = dry * gainReduction * makeupGain;
+                buffer.setSample(ch, sample, dry * (1.0f - compMix) + wet * compMix);
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  PARAMETRIC EQ setup
+    // ═══════════════════════════════════════════════════════════════════
+    if (peqEnable)
+    {
+        auto peqCoeffs1 = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), peqFreq1, peqQ1, juce::Decibels::decibelsToGain(peqGain1));
+        auto peqCoeffs2 = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), peqFreq2, peqQ2, juce::Decibels::decibelsToGain(peqGain2));
+        auto peqCoeffs3 = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), peqFreq3, peqQ3, juce::Decibels::decibelsToGain(peqGain3));
+        peqL1.coefficients = peqCoeffs1; peqR1.coefficients = peqCoeffs1;
+        peqL2.coefficients = peqCoeffs2; peqR2.coefficients = peqCoeffs2;
+        peqL3.coefficients = peqCoeffs3; peqR3.coefficients = peqCoeffs3;
+    }
 
     auto processAmpStage = [&](auto block)
     {
@@ -1483,10 +2175,14 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
                 const float boosted = gated * boostGain;
                 const float tightened = (channel == 0 ? tightFilterL.processSample(boosted)
                                                       : tightFilterR.processSample(boosted));
-                float amped = std::tanh(tightened * drive * ampSaturation) * ampPostEQ;
+                const float wahed = wahEnable
+                    ? (channel == 0 ? wahFilterL.processSample(tightened)
+                                    : wahFilterR.processSample(tightened))
+                    : tightened;
+                float amped = std::tanh(wahed * drive * ampSaturation) * ampPostEQ;
                 if (metalMode)
                 {
-                    const float hard = juce::jlimit(-0.95f, 0.95f, tightened * drive * 0.88f);
+                    const float hard = juce::jlimit(-0.95f, 0.95f, wahed * drive * 0.88f);
                     amped = amped * 0.62f + hard * 0.38f;
                 }
                 channelData[sample] = amped * outputGain;
@@ -1497,29 +2193,193 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     juce::dsp::AudioBlock<float> block(buffer);
     auto inOutBlock = block.getSubsetChannelBlock(0, static_cast<size_t>(totalNumInputChannels));
 
-    // Pre-FX and amp stage with optional oversampling.
-    if (oversamplingMode == 1 && oversampling2x != nullptr)
+    // ── When NAM is active, skip amp sim / gate / oversampling / distortion entirely.
+    //    NAM models include their own amp modeling — doubling up destroys the signal.
+#if VAYU_HAS_NAM
+    if (!namStageActive)
+#endif
     {
-        auto up = oversampling2x->processSamplesUp(juce::dsp::AudioBlock<const float>(inOutBlock));
-        processAmpStage(up);
-        oversampling2x->processSamplesDown(inOutBlock);
-    }
-    else if (oversamplingMode == 2 && oversampling4x != nullptr)
-    {
-        auto up = oversampling4x->processSamplesUp(juce::dsp::AudioBlock<const float>(inOutBlock));
-        processAmpStage(up);
-        oversampling4x->processSamplesDown(inOutBlock);
-    }
-    else
-    {
-        processAmpStage(inOutBlock);
+        // Pre-FX and amp stage with optional oversampling.
+        if (oversamplingMode == 1 && oversampling2x != nullptr)
+        {
+            auto up = oversampling2x->processSamplesUp(juce::dsp::AudioBlock<const float>(inOutBlock));
+            processAmpStage(up);
+            oversampling2x->processSamplesDown(inOutBlock);
+        }
+        else if (oversamplingMode == 2 && oversampling4x != nullptr)
+        {
+            auto up = oversampling4x->processSamplesUp(juce::dsp::AudioBlock<const float>(inOutBlock));
+            processAmpStage(up);
+            oversampling4x->processSamplesDown(inOutBlock);
+        }
+        else
+        {
+            processAmpStage(inOutBlock);
+        }
     }
 
-    // NAM stage (real-time safe): no allocation, no locks, stable shared_ptr snapshot per block.
+    // Distortion stomp stage (between amp and NAM).
+    if (distEnable
+#if VAYU_HAS_NAM
+        && !namStageActive
+#endif
+        )
+    {
+        const float distPreGain = juce::Decibels::decibelsToGain(distGainDb);
+        const float distOutGain = juce::Decibels::decibelsToGain(distOutputDb);
+        const float driveAmt = juce::jlimit(0.0f, 1.0f, distDrive);
+        const float toneAmt = juce::jlimit(0.0f, 1.0f, distTone);
+        const float wetAmt = juce::jlimit(0.0f, 1.0f, distMix);
+        const float dryAmt = 1.0f - wetAmt;
+        const int mode = juce::jlimit(0, 3, distMode);
+
+        float modePreMul = 1.0f;
+        float modeHardBoost = 1.0f;
+        float modeFoldBoost = 1.0f;
+        float lpMin = 900.0f;
+        float lpMax = 7200.0f;
+        float hpMin = 120.0f;
+        float hpMax = 260.0f;
+
+        if (mode == 1) // Brutal
+        {
+            modePreMul = 1.45f;
+            modeHardBoost = 1.28f;
+            modeFoldBoost = 1.45f;
+            hpMin = 150.0f;
+            hpMax = 330.0f;
+        }
+        else if (mode == 2) // Fuzz
+        {
+            modePreMul = 1.65f;
+            modeHardBoost = 0.72f;
+            modeFoldBoost = 2.1f;
+            lpMin = 700.0f;
+            lpMax = 4200.0f;
+            hpMin = 80.0f;
+            hpMax = 190.0f;
+        }
+        else if (mode == 3) // Insane
+        {
+            modePreMul = 2.25f;
+            modeHardBoost = 1.45f;
+            modeFoldBoost = 2.6f;
+            lpMin = 850.0f;
+            lpMax = 5200.0f;
+            hpMin = 170.0f;
+            hpMax = 360.0f;
+        }
+
+        const float driveCurve = 0.35f + driveAmt * driveAmt * 1.85f;
+        const float hardAmt = juce::jlimit(0.10f, 0.95f, (0.25f + driveAmt * 0.7f) * modeHardBoost);
+        const float foldAmt = juce::jlimit(0.0f, 1.0f, juce::jmax(0.0f, (driveAmt - 0.5f) * 2.1f) * modeFoldBoost);
+        const float lpCutHz = juce::jlimit(2000.0f, 14000.0f,
+            juce::jmap(toneAmt, lpMin, lpMax) * (distHiCutHz / 6500.0f));
+        const float hpCutHz = juce::jlimit(40.0f, 500.0f,
+            juce::jmap(toneAmt, hpMin, hpMax) * (distTightHz / 140.0f));
+        const float presenceGain = juce::Decibels::decibelsToGain(distPresenceDb);
+        const float lpCoeff = 1.0f - std::exp(-juce::MathConstants<float>::twoPi * lpCutHz / sr);
+        const float hpCoeff = std::exp(-juce::MathConstants<float>::twoPi * hpCutHz / sr);
+
+        for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+        {
+            auto* data = buffer.getWritePointer(ch);
+            float& toneState = (ch % 2 == 0) ? distToneStateL : distToneStateR;
+            float hpState = 0.0f;
+
+            for (int i = 0; i < numSamples; ++i)
+            {
+                const float dry = data[i];
+                const float boosted = dry * distPreGain * modePreMul * (1.0f + 4.6f * driveCurve);
+
+                // Tighten lows before clipping to keep palm-mutes punchy.
+                hpState = hpCoeff * hpState + (1.0f - hpCoeff) * boosted;
+                const float x = boosted - hpState * 0.92f;
+
+                const float soft1 = std::tanh(x * (2.0f + 8.0f * driveCurve));
+                const float soft2 = std::tanh(soft1 * (1.5f + 8.5f * driveCurve));
+                const float hard = juce::jlimit(-1.0f, 1.0f, x * (1.6f + 6.0f * driveCurve));
+
+                // Fuzz/Insane modes: asymmetry and gated tail texture.
+                const float asym = (mode >= 2) ? std::tanh((x + 0.12f) * (2.0f + 7.0f * driveCurve)) : soft2;
+
+                float folded = asym;
+                if (foldAmt > 0.0f)
+                {
+                    const float f = asym * (1.0f + foldAmt * 2.8f);
+                    folded = std::sin(f * juce::MathConstants<float>::pi);
+                }
+
+                float clipped = (asym * (1.0f - hardAmt) + hard * hardAmt) * (1.0f - foldAmt * 0.35f)
+                              + folded * (foldAmt * 0.35f);
+                if (mode == 1)
+                    clipped = std::tanh(clipped * (1.25f + driveAmt * 1.7f));
+                else if (mode == 2)
+                    clipped = juce::jlimit(-1.0f, 1.0f, clipped * (1.35f + driveAmt * 2.0f));
+                else if (mode == 3)
+                {
+                    const float oct = std::sin(clipped * juce::MathConstants<float>::twoPi) * 0.22f;
+                    clipped = std::tanh((clipped + oct) * (1.8f + driveAmt * 2.7f));
+                }
+
+                toneState += lpCoeff * (clipped - toneState);
+                const float presence = clipped - toneState;
+                const float toned = toneState + presence * (0.20f + toneAmt * 1.15f) * presenceGain;
+                const float wet = std::tanh(toned * (1.0f + driveAmt * 0.5f)) * distOutGain;
+
+                data[i] = dry * dryAmt + wet * wetAmt;
+            }
+        }
+
+        // Cleanup gate reduces ghost tails / overlapping fizz while idle.
+        const float gateOpenLin = juce::Decibels::decibelsToGain(distGateDb);
+        const float gateCloseLin = gateOpenLin * 0.63f;
+        const float envAtk = std::exp(-1.0f / juce::jmax(1.0f, 0.0012f * sr));
+        const float envRel = std::exp(-1.0f / juce::jmax(1.0f, 0.020f * sr));
+
+        for (int i = 0; i < numSamples; ++i)
+        {
+            float peak = 0.0f;
+            for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+            {
+                const float s = buffer.getSample(ch, i);
+                peak = juce::jmax(peak, std::abs(s));
+            }
+
+            if (peak > distGateEnv)
+                distGateEnv = envAtk * distGateEnv + (1.0f - envAtk) * peak;
+            else
+                distGateEnv = envRel * distGateEnv + (1.0f - envRel) * peak;
+
+            if (distGateOpen)
+            {
+                if (distGateEnv < gateCloseLin)
+                    distGateOpen = false;
+            }
+            else if (distGateEnv > gateOpenLin)
+            {
+                distGateOpen = true;
+            }
+
+            const float target = distGateOpen ? 1.0f : 0.10f;
+            distGateGain += (target - distGateGain) * 0.12f;
+
+            for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+                buffer.setSample(ch, i, buffer.getSample(ch, i) * distGateGain);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  NAM STAGE — clean input → NAM model → output volume
+    //  Mono models: process L channel once, copy result to R.
+    //  Stereo models: process L+R through the model's 2-in/2-out path.
+    //  Signal chain before this point is SKIPPED when NAM is active
+    //  (gate, amp sim, oversampling, distortion all bypassed above).
+    // ═══════════════════════════════════════════════════════════════════
 #if VAYU_HAS_NAM
     if (!namBypass)
     {
-        if (auto activeNam = std::atomic_load_explicit(&namEngine, std::memory_order_acquire))
+        if (auto activeNam = activeNamBlock)
         {
             if (numSamples <= static_cast<int>(namScratchA.size()) && numSamples <= static_cast<int>(namDryA.size()))
             {
@@ -1553,64 +2413,62 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
                 const int namIn = activeNam->NumInputChannels();
                 const int namOut = activeNam->NumOutputChannels();
 
+                // Save dry signal for blend
+                if (namBlend < 0.999f)
+                {
+                    std::memcpy(namDryA.data(), buffer.getReadPointer(0),
+                                static_cast<size_t>(numSamples) * sizeof(float));
+                    if (totalNumOutputChannels > 1)
+                        std::memcpy(namDryB.data(), buffer.getReadPointer(1),
+                                    static_cast<size_t>(numSamples) * sizeof(float));
+                }
+
                 if (namIn >= 2 && namOut >= 2 && totalNumOutputChannels > 1)
                 {
-                    auto* inL = buffer.getWritePointer(0);
-                    auto* inR = buffer.getWritePointer(1);
-                    auto* outL = namScratchA.data();
-                    auto* outR = namScratchB.data();
-
-                    if (namBlend < 0.999f)
-                    {
-                        std::memcpy(namDryA.data(), inL, static_cast<size_t>(numSamples) * sizeof(float));
-                        std::memcpy(namDryB.data(), inR, static_cast<size_t>(numSamples) * sizeof(float));
-                    }
-
-                    float* inPtrs[2] = { inL, inR };
-                    float* outPtrs[2] = { outL, outR };
+                    // ── Stereo NAM model (2-in → 2-out) ──
+                    float* inPtrs[2] = { buffer.getWritePointer(0), buffer.getWritePointer(1) };
+                    float* outPtrs[2] = { namScratchA.data(), namScratchB.data() };
                     activeNam->process(inPtrs, outPtrs, numSamples);
 
-                    if (namBlend < 0.999f)
-                    {
-                        const float dryMix = 1.0f - namBlend;
-                        for (int i = 0; i < numSamples; ++i)
-                        {
-                            buffer.setSample(0, i, namDryA[static_cast<size_t>(i)] * dryMix + namScratchA[static_cast<size_t>(i)] * namBlend);
-                            buffer.setSample(1, i, namDryB[static_cast<size_t>(i)] * dryMix + namScratchB[static_cast<size_t>(i)] * namBlend);
-                        }
-                    }
-                    else
-                    {
-                        std::memcpy(buffer.getWritePointer(0), namScratchA.data(), static_cast<size_t>(numSamples) * sizeof(float));
-                        std::memcpy(buffer.getWritePointer(1), namScratchB.data(), static_cast<size_t>(numSamples) * sizeof(float));
-                    }
+                    std::memcpy(buffer.getWritePointer(0), namScratchA.data(),
+                                static_cast<size_t>(numSamples) * sizeof(float));
+                    std::memcpy(buffer.getWritePointer(1), namScratchB.data(),
+                                static_cast<size_t>(numSamples) * sizeof(float));
                 }
                 else
                 {
-                    for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+                    // ── Mono NAM model (1-in → 1-out) ──
+                    // Process L channel only through single engine, copy to R.
+                    // Guitar input is typically mono — this avoids internal
+                    // state corruption from processing the same engine twice.
+                    float* inPtrs[1] = { buffer.getWritePointer(0) };
+                    float* outPtrs[1] = { namScratchA.data() };
+                    activeNam->process(inPtrs, outPtrs, numSamples);
+
+                    std::memcpy(buffer.getWritePointer(0), namScratchA.data(),
+                                static_cast<size_t>(numSamples) * sizeof(float));
+                    if (totalNumOutputChannels > 1)
+                        std::memcpy(buffer.getWritePointer(1), namScratchA.data(),
+                                    static_cast<size_t>(numSamples) * sizeof(float));
+                }
+
+                // Blend dry/wet
+                if (namBlend < 0.999f)
+                {
+                    const float dryMix = 1.0f - namBlend;
+                    auto* outL = buffer.getWritePointer(0);
+                    for (int i = 0; i < numSamples; ++i)
+                        outL[i] = namDryA[static_cast<size_t>(i)] * dryMix + outL[i] * namBlend;
+
+                    if (totalNumOutputChannels > 1)
                     {
-                        auto* in = buffer.getWritePointer(ch);
-                        auto* out = namScratchA.data();
-                        if (namBlend < 0.999f)
-                            std::memcpy(namDryA.data(), in, static_cast<size_t>(numSamples) * sizeof(float));
-
-                        float* inPtrs[1] = { in };
-                        float* outPtrs[1] = { out };
-                        activeNam->process(inPtrs, outPtrs, numSamples);
-
-                        if (namBlend < 0.999f)
-                        {
-                            const float dryMix = 1.0f - namBlend;
-                            for (int i = 0; i < numSamples; ++i)
-                                buffer.setSample(ch, i, namDryA[static_cast<size_t>(i)] * dryMix + namScratchA[static_cast<size_t>(i)] * namBlend);
-                        }
-                        else
-                        {
-                            std::memcpy(buffer.getWritePointer(ch), namScratchA.data(), static_cast<size_t>(numSamples) * sizeof(float));
-                        }
+                        auto* outR = buffer.getWritePointer(1);
+                        for (int i = 0; i < numSamples; ++i)
+                            outR[i] = namDryB[static_cast<size_t>(i)] * dryMix + outR[i] * namBlend;
                     }
                 }
 
+                // Auto-match gain compensation
                 if (applyNamMatch)
                 {
                     const float postNamRms = measureStereoRms();
@@ -1620,7 +2478,7 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
 
                     if (namMatchOutRms > 1.0e-6f && namMatchInRms > 1.0e-6f)
                     {
-                        const float matchGain = juce::jlimit(0.5f, 2.0f, namMatchInRms / namMatchOutRms);
+                        const float matchGain = juce::jlimit(0.125f, 16.0f, namMatchInRms / namMatchOutRms);
                         for (int ch = 0; ch < totalNumOutputChannels; ++ch)
                             buffer.applyGain(ch, 0, numSamples, matchGain);
                         namMatchGainDb.store(juce::Decibels::gainToDecibels(matchGain));
@@ -1628,6 +2486,13 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
                 }
             }
         }
+    }
+
+    // Apply output volume after NAM (since amp stage was skipped)
+    if (namStageActive && std::abs(outputDb) > 0.05f)
+    {
+        for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+            buffer.applyGain(ch, 0, numSamples, outputGain);
     }
 #endif
 
@@ -1686,21 +2551,11 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
         }
     }
 
-    if (killEnable)
+    if (killEnable && hostIsPlaying)
     {
         constexpr float killDivisions[] = { 1.0f, 2.0f, 4.0f, 8.0f };
         const int rateIndex = juce::jlimit(0, 3, killRate);
-        double bpm = 120.0;
-        if (auto* hostPlayHead = getPlayHead())
-        {
-            if (auto position = hostPlayHead->getPosition())
-            {
-                if (auto hostBpm = position->getBpm(); hostBpm.hasValue() && *hostBpm > 0.0)
-                    bpm = *hostBpm;
-            }
-        }
-
-        const float hz = static_cast<float>(bpm / 60.0) * killDivisions[rateIndex];
+        const float hz = static_cast<float>(resolvedTempoBpm / 60.0) * killDivisions[rateIndex];
         const float phaseInc = juce::MathConstants<float>::twoPi * hz / static_cast<float>(getSampleRate());
         const float depth = juce::jlimit(0.0f, 1.0f, killDepth);
 
@@ -1795,11 +2650,186 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
             buffer.setSample(1, sample, r);
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  PARAMETRIC EQ (post-cab, pre-modulation)
+    // ═══════════════════════════════════════════════════════════════════
+    if (peqEnable)
+    {
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            float l = buffer.getSample(0, sample);
+            l = peqL1.processSample(l);
+            l = peqL2.processSample(l);
+            l = peqL3.processSample(l);
+            buffer.setSample(0, sample, l);
+
+            if (totalNumOutputChannels > 1)
+            {
+                float r = buffer.getSample(1, sample);
+                r = peqR1.processSample(r);
+                r = peqR2.processSample(r);
+                r = peqR3.processSample(r);
+                buffer.setSample(1, sample, r);
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  CHORUS (stereo, LFO-modulated delay)
+    // ═══════════════════════════════════════════════════════════════════
+    if (chorusEnable)
+    {
+        const float chorusMaxDelayMs = 7.0f; // ms
+        const float chorusBaseDelay = 5.0f;   // ms base delay
+        const float chorusDepthMs = chorusDepthParam * chorusMaxDelayMs;
+        const float chorusPhaseInc = juce::MathConstants<float>::twoPi * chorusRate / static_cast<float>(getSampleRate());
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            chorusLfoPhase += chorusPhaseInc;
+            if (chorusLfoPhase > juce::MathConstants<float>::twoPi)
+                chorusLfoPhase -= juce::MathConstants<float>::twoPi;
+
+            const float lfoL = std::sin(chorusLfoPhase);
+            const float lfoR = std::sin(chorusLfoPhase + juce::MathConstants<float>::pi * 0.5f); // 90° offset for stereo
+
+            const float delayL = (chorusBaseDelay + lfoL * chorusDepthMs) * 0.001f * static_cast<float>(getSampleRate());
+            const float delayR = (chorusBaseDelay + lfoR * chorusDepthMs) * 0.001f * static_cast<float>(getSampleRate());
+
+            const float dryL = buffer.getSample(0, sample);
+            chorusDelayL.pushSample(0, dryL);
+            const float wetL = chorusDelayL.popSample(0, juce::jmax(1.0f, delayL));
+            buffer.setSample(0, sample, dryL * (1.0f - chorusMix) + wetL * chorusMix);
+
+            if (totalNumOutputChannels > 1)
+            {
+                const float dryR = buffer.getSample(1, sample);
+                chorusDelayR.pushSample(0, dryR);
+                const float wetR = chorusDelayR.popSample(0, juce::jmax(1.0f, delayR));
+                buffer.setSample(1, sample, dryR * (1.0f - chorusMix) + wetR * chorusMix);
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  PHASER (4-stage allpass, stereo)
+    // ═══════════════════════════════════════════════════════════════════
+    if (phaserEnable)
+    {
+        const float phaserMinFreq = 200.0f;
+        const float phaserMaxFreq = 4000.0f;
+        const float phaserPhaseInc = juce::MathConstants<float>::twoPi * phaserRate / static_cast<float>(getSampleRate());
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            phaserLfoPhase += phaserPhaseInc;
+            if (phaserLfoPhase > juce::MathConstants<float>::twoPi)
+                phaserLfoPhase -= juce::MathConstants<float>::twoPi;
+
+            const float lfo = 0.5f + 0.5f * std::sin(phaserLfoPhase);
+            const float notchFreq = phaserMinFreq + (phaserMaxFreq - phaserMinFreq) * lfo * phaserDepthParam;
+            const float apCoeff = (std::tan(juce::MathConstants<float>::pi * notchFreq / static_cast<float>(getSampleRate())) - 1.0f)
+                                / (std::tan(juce::MathConstants<float>::pi * notchFreq / static_cast<float>(getSampleRate())) + 1.0f);
+
+            auto processAllpass = [&](float in, std::array<float, kPhaserStages>& state) -> float
+            {
+                float x = in + phaserFeedbackParam * state[kPhaserStages - 1];
+                for (int s = 0; s < kPhaserStages; ++s)
+                {
+                    const float y = apCoeff * x + state[s];
+                    state[s] = x - apCoeff * y;
+                    x = y;
+                }
+                return x;
+            };
+
+            const float dryL = buffer.getSample(0, sample);
+            const float wetL = processAllpass(dryL, phaserAPStateL);
+            buffer.setSample(0, sample, dryL * (1.0f - phaserMix) + wetL * phaserMix);
+
+            if (totalNumOutputChannels > 1)
+            {
+                const float dryR = buffer.getSample(1, sample);
+                const float wetR = processAllpass(dryR, phaserAPStateR);
+                buffer.setSample(1, sample, dryR * (1.0f - phaserMix) + wetR * phaserMix);
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  FLANGER (short modulated delay with feedback)
+    // ═══════════════════════════════════════════════════════════════════
+    if (flangerEnable)
+    {
+        const float flangerMaxMs = 5.0f;
+        const float flangerBaseMs = 1.0f;
+        const float flangerPhaseInc = juce::MathConstants<float>::twoPi * flangerRate / sr;
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            flangerLfoPhase += flangerPhaseInc;
+            if (flangerLfoPhase > juce::MathConstants<float>::twoPi)
+                flangerLfoPhase -= juce::MathConstants<float>::twoPi;
+
+            const float lfo = 0.5f + 0.5f * std::sin(flangerLfoPhase);
+            const float delaySamp = (flangerBaseMs + lfo * flangerDepthParam * flangerMaxMs) * 0.001f * sr;
+
+            // Left
+            const float dryL = buffer.getSample(0, sample);
+            flangerDelayL.pushSample(0, dryL + flangerFeedbackSampleL * flangerFeedbackParam);
+            const float wetL = flangerDelayL.popSample(0, juce::jmax(1.0f, delaySamp));
+            flangerFeedbackSampleL = wetL;
+            buffer.setSample(0, sample, dryL * (1.0f - flangerMix) + wetL * flangerMix);
+
+            if (totalNumOutputChannels > 1)
+            {
+                const float dryR = buffer.getSample(1, sample);
+                flangerDelayR.pushSample(0, dryR + flangerFeedbackSampleR * flangerFeedbackParam);
+                const float wetR = flangerDelayR.popSample(0, juce::jmax(1.0f, delaySamp));
+                flangerFeedbackSampleR = wetR;
+                buffer.setSample(1, sample, dryR * (1.0f - flangerMix) + wetR * flangerMix);
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  TREMOLO
+    // ═══════════════════════════════════════════════════════════════════
+    if (tremoloEnable)
+    {
+        static constexpr float divisions[] = { 1.0f, 2.0f, 1.5f, 3.0f, 4.0f };
+        const int divIndex = juce::jlimit(0, 4, tremoloDivision);
+        const float tremoloHz = tremoloSync
+            ? static_cast<float>(resolvedTempoBpm / 60.0) * divisions[divIndex]
+            : tremoloRate;
+        const float tremoloPhaseInc = juce::MathConstants<float>::twoPi * tremoloHz / sr;
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            tremoloLfoPhase += tremoloPhaseInc;
+            if (tremoloLfoPhase > juce::MathConstants<float>::twoPi)
+                tremoloLfoPhase -= juce::MathConstants<float>::twoPi;
+
+            float lfo;
+            if (tremoloShape == 1)       // Square
+                lfo = std::sin(tremoloLfoPhase) > 0.0f ? 1.0f : 0.0f;
+            else if (tremoloShape == 2)  // Triangle
+                lfo = std::asin(std::sin(tremoloLfoPhase)) / juce::MathConstants<float>::halfPi * 0.5f + 0.5f;
+            else                          // Sine
+                lfo = 0.5f + 0.5f * std::sin(tremoloLfoPhase);
+
+            const float gain = 1.0f - tremoloDepthParam * (1.0f - lfo);
+
+            for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+                buffer.setSample(ch, sample, buffer.getSample(ch, sample) * gain);
+        }
+    }
+
     // Post-FX delay with LFO modulation.
     {
         const float lfoPhaseInc = juce::MathConstants<float>::twoPi * delayModRate
-                                  / static_cast<float>(getSampleRate());
-        const float baseDelaySamples = static_cast<float>(getSampleRate() * effectiveDelayMs * 0.001);
+                                  / sr;
+        const float baseDelaySamples = sr * effectiveDelayMs * 0.001f;
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
@@ -1826,7 +2856,7 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     // Reverb pre-delay
     if (reverbPreDelayMs > 0.01f)
     {
-        const float preDelaySamples = reverbPreDelayMs * 0.001f * static_cast<float>(getSampleRate());
+        const float preDelaySamples = reverbPreDelayMs * 0.001f * sr;
         reverbPreDelay.setDelay(preDelaySamples);
         for (int channel = 0; channel < totalNumOutputChannels; ++channel)
         {
@@ -1856,7 +2886,7 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     if (limiterEnabled)
     {
         const float limThresh = juce::Decibels::decibelsToGain(limiterThreshDb);
-        const float limRelCoeff = std::exp(-1.0f / (0.08f * static_cast<float>(getSampleRate())));
+        const float limRelCoeff = std::exp(-1.0f / (0.08f * sr));
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
             float peak = 0.0f;
@@ -1880,6 +2910,139 @@ void VayuAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
 
     const float outputPeak = getBufferPeak(buffer, 0, totalNumOutputChannels);
     outputMeterLevel.store(juce::jmax(outputPeak, outputMeterLevel.load() * 0.92f));
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  LOOPER (record / playback / overdub)
+    // ═══════════════════════════════════════════════════════════════════
+    if (looperState == LooperState::Recording)
+    {
+        const int maxLen = looperBuffer.getNumSamples();
+        for (int s = 0; s < numSamples && looperWritePos < maxLen; ++s)
+        {
+            for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+                looperBuffer.setSample(ch, looperWritePos, buffer.getReadPointer(ch)[s]);
+            ++looperWritePos;
+        }
+        looperLength = looperWritePos;
+    }
+    else if (looperState == LooperState::Playing && looperLength > 0)
+    {
+        if (totalNumOutputChannels > 1 && looperBuffer.getNumChannels() > 1)
+        {
+            auto* outL = buffer.getWritePointer(0);
+            auto* outR = buffer.getWritePointer(1);
+            const auto* loopL = looperBuffer.getReadPointer(0);
+            const auto* loopR = looperBuffer.getReadPointer(1);
+
+            for (int s = 0; s < numSamples; ++s)
+            {
+                outL[s] += loopL[looperPlayPos] * looperLevelGain;
+                outR[s] += loopR[looperPlayPos] * looperLevelGain;
+                looperPlayPos = (looperPlayPos + 1) % looperLength;
+            }
+        }
+        else
+        {
+            auto* out = buffer.getWritePointer(0);
+            const auto* loop = looperBuffer.getReadPointer(0);
+            for (int s = 0; s < numSamples; ++s)
+            {
+                out[s] += loop[looperPlayPos] * looperLevelGain;
+                looperPlayPos = (looperPlayPos + 1) % looperLength;
+            }
+        }
+    }
+    else if (looperState == LooperState::Overdubbing && looperLength > 0)
+    {
+        constexpr float overdubInputGain = 0.5f;
+        constexpr float overdubKeep = 0.995f;
+
+        if (totalNumOutputChannels > 1 && looperBuffer.getNumChannels() > 1)
+        {
+            auto* outL = buffer.getWritePointer(0);
+            auto* outR = buffer.getWritePointer(1);
+            auto* loopL = looperBuffer.getWritePointer(0);
+            auto* loopR = looperBuffer.getWritePointer(1);
+
+            for (int s = 0; s < numSamples; ++s)
+            {
+                const float existingL = loopL[looperPlayPos];
+                const float incomingL = outL[s];
+                loopL[looperPlayPos] = std::tanh(existingL * overdubKeep + incomingL * overdubInputGain);
+                outL[s] = std::tanh(incomingL + existingL * looperLevelGain);
+
+                const float existingR = loopR[looperPlayPos];
+                const float incomingR = outR[s];
+                loopR[looperPlayPos] = std::tanh(existingR * overdubKeep + incomingR * overdubInputGain);
+                outR[s] = std::tanh(incomingR + existingR * looperLevelGain);
+
+                looperPlayPos = (looperPlayPos + 1) % looperLength;
+            }
+        }
+        else
+        {
+            auto* out = buffer.getWritePointer(0);
+            auto* loop = looperBuffer.getWritePointer(0);
+            for (int s = 0; s < numSamples; ++s)
+            {
+                const float existing = loop[looperPlayPos];
+                const float incoming = out[s];
+                loop[looperPlayPos] = std::tanh(existing * overdubKeep + incoming * overdubInputGain);
+                out[s] = std::tanh(incoming + existing * looperLevelGain);
+                looperPlayPos = (looperPlayPos + 1) % looperLength;
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  METRONOME (additive click generation)
+    // ═══════════════════════════════════════════════════════════════════
+    if (metroEnable && (!metroSync || hostIsPlaying))
+    {
+        float* metroOutL = buffer.getWritePointer(0);
+        float* metroOutR = (totalNumOutputChannels > 1) ? buffer.getWritePointer(1) : nullptr;
+        static constexpr int beatsPerSig[] = { 4, 3, 6, 5, 7 };
+        const int beatsInBar = beatsPerSig[juce::jlimit(0, 4, metroTimeSig)];
+        const float metroHz = static_cast<float>((metroSync ? resolvedTempoBpm : metroBpm) / 60.0);
+        const float metroPhaseInc = metroHz / sr;
+        const float clickDuration = 0.015f; // 15 ms click
+        const float clickSamples = clickDuration * sr;
+
+        for (int s = 0; s < numSamples; ++s)
+        {
+            metroPhase += metroPhaseInc;
+            if (metroPhase >= 1.0f)
+            {
+                metroPhase -= 1.0f;
+                metroClickActive = true;
+                metroClickPhase = 0.0f;
+                metroCurrentClickBeat = metroBeatCount;
+                metroBeatCount = (metroBeatCount + 1) % beatsInBar;
+                metroClickOscPhase = 0.0f;
+            }
+
+            if (metroClickActive)
+            {
+                const float clickFreq = (metroCurrentClickBeat == 0) ? 1500.0f : 1000.0f;
+                const float clickEnv = 1.0f - (metroClickPhase / clickSamples);
+                if (clickEnv <= 0.0f)
+                {
+                    metroClickActive = false;
+                }
+                else
+                {
+                    const float clickSample = std::sin(metroClickOscPhase) * clickEnv * metroLevel;
+                    metroClickOscPhase += juce::MathConstants<float>::twoPi * clickFreq / sr;
+                    metroOutL[s] += clickSample;
+                    if (metroOutR != nullptr)
+                        metroOutR[s] += clickSample;
+                }
+                metroClickPhase += 1.0f;
+            }
+        }
+    }
+
+    hostWasPlaying = hostIsPlaying;
 
     // Stereo correlation coefficient
     if (totalNumOutputChannels >= 2 && buffer.getNumSamples() > 0)
@@ -1942,31 +3105,9 @@ void VayuAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
         state.setProperty("namModelPath", namModelPath, nullptr);
     }
 
-    state.setProperty("cc_drive", midiCCMap[0], nullptr);
-    state.setProperty("cc_output", midiCCMap[1], nullptr);
-    state.setProperty("cc_gate", midiCCMap[2], nullptr);
-    state.setProperty("cc_boost", midiCCMap[3], nullptr);
-    state.setProperty("cc_delayMix", midiCCMap[4], nullptr);
-    state.setProperty("cc_reverbMix", midiCCMap[5], nullptr);
-    state.setProperty("cc_cabBlend", midiCCMap[6], nullptr);
-    state.setProperty("cc_cabPan", midiCCMap[7], nullptr);
-    state.setProperty("cc_cabLevelA", midiCCMap[8], nullptr);
-    state.setProperty("cc_cabLevelB", midiCCMap[9], nullptr);
-    state.setProperty("cc_delayFeedback", midiCCMap[10], nullptr);
-    state.setProperty("cc_delayTimeMs", midiCCMap[11], nullptr);
-    state.setProperty("cc_reverbRoomSize", midiCCMap[12], nullptr);
-    state.setProperty("cc_reverbDamping", midiCCMap[13], nullptr);
-    state.setProperty("cc_bass", midiCCMap[14], nullptr);
-    state.setProperty("cc_mid", midiCCMap[15], nullptr);
-    state.setProperty("cc_treble", midiCCMap[16], nullptr);
-    state.setProperty("cc_presence", midiCCMap[17], nullptr);
-    state.setProperty("cc_pitch", midiCCMap[18], nullptr);
-    state.setProperty("cc_tight", midiCCMap[19], nullptr);
-    state.setProperty("cc_wahFreq", midiCCMap[20], nullptr);
-    state.setProperty("cc_wahDepth", midiCCMap[21], nullptr);
-    state.setProperty("cc_killDepth", midiCCMap[22], nullptr);
-    state.setProperty("cc_namBlend", midiCCMap[23], nullptr);
-    state.setProperty("cc_inputTrim", midiCCMap[24], nullptr);
+    const auto& midiTargets = getMidiLearnTargets();
+    for (size_t i = 0; i < midiTargets.size(); ++i)
+        state.setProperty(midiTargets[i].stateKey, i < midiCCMap.size() ? midiCCMap[i] : -1, nullptr);
 
     auto xml = state.createXml();
     copyXmlToBinary(*xml, destData);
@@ -1988,31 +3129,10 @@ void VayuAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
     const auto namPath = loadedState.getProperty("namModelPath").toString();
     setBackgroundImagePath(loadedState.getProperty("bgImagePath").toString());
 
-    midiCCMap[0] = static_cast<int>(loadedState.getProperty("cc_drive", -1));
-    midiCCMap[1] = static_cast<int>(loadedState.getProperty("cc_output", -1));
-    midiCCMap[2] = static_cast<int>(loadedState.getProperty("cc_gate", -1));
-    midiCCMap[3] = static_cast<int>(loadedState.getProperty("cc_boost", -1));
-    midiCCMap[4] = static_cast<int>(loadedState.getProperty("cc_delayMix", -1));
-    midiCCMap[5] = static_cast<int>(loadedState.getProperty("cc_reverbMix", -1));
-    midiCCMap[6] = static_cast<int>(loadedState.getProperty("cc_cabBlend", -1));
-    midiCCMap[7]  = static_cast<int>(loadedState.getProperty("cc_cabPan", -1));
-    midiCCMap[8]  = static_cast<int>(loadedState.getProperty("cc_cabLevelA", -1));
-    midiCCMap[9]  = static_cast<int>(loadedState.getProperty("cc_cabLevelB", -1));
-    midiCCMap[10] = static_cast<int>(loadedState.getProperty("cc_delayFeedback", -1));
-    midiCCMap[11] = static_cast<int>(loadedState.getProperty("cc_delayTimeMs", -1));
-    midiCCMap[12] = static_cast<int>(loadedState.getProperty("cc_reverbRoomSize", -1));
-    midiCCMap[13] = static_cast<int>(loadedState.getProperty("cc_reverbDamping", -1));
-    midiCCMap[14] = static_cast<int>(loadedState.getProperty("cc_bass", -1));
-    midiCCMap[15] = static_cast<int>(loadedState.getProperty("cc_mid", -1));
-    midiCCMap[16] = static_cast<int>(loadedState.getProperty("cc_treble", -1));
-    midiCCMap[17] = static_cast<int>(loadedState.getProperty("cc_presence", -1));
-    midiCCMap[18] = static_cast<int>(loadedState.getProperty("cc_pitch", -1));
-    midiCCMap[19] = static_cast<int>(loadedState.getProperty("cc_tight", -1));
-    midiCCMap[20] = static_cast<int>(loadedState.getProperty("cc_wahFreq", -1));
-    midiCCMap[21] = static_cast<int>(loadedState.getProperty("cc_wahDepth", -1));
-    midiCCMap[22] = static_cast<int>(loadedState.getProperty("cc_killDepth", -1));
-    midiCCMap[23] = static_cast<int>(loadedState.getProperty("cc_namBlend", -1));
-    midiCCMap[24] = static_cast<int>(loadedState.getProperty("cc_inputTrim", -1));
+    const auto& midiTargets = getMidiLearnTargets();
+    midiCCMap.assign(midiTargets.size(), -1);
+    for (size_t i = 0; i < midiTargets.size(); ++i)
+        midiCCMap[i] = static_cast<int>(loadedState.getProperty(midiTargets[i].stateKey, -1));
 
     if (irPathA.isNotEmpty())
         loadCabinetIRSlot(0, juce::File(irPathA));
